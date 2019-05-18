@@ -24,7 +24,7 @@ public class HarmonicTrapSystem : JobComponentSystem
     struct Trap
     {
         public HarmonicTrap HarmonicTrap;
-        public Translation Translation;
+        public Translation Position;
     }
     NativeArray<Trap> Traps;
 
@@ -42,6 +42,8 @@ public class HarmonicTrapSystem : JobComponentSystem
         var calculateHarmonicForcesJH = new CalculateHarmonicTrapForces
         {
             Traps = Traps,
+            AtomPositions = GetArchetypeChunkComponentType<Translation>(true),
+            AtomForces = GetArchetypeChunkComponentType<Force>(false)
         }.Schedule(TrappedAtomQuery, getHarmonicTrapsJH);
 
         return calculateHarmonicForcesJH;
@@ -50,14 +52,16 @@ public class HarmonicTrapSystem : JobComponentSystem
     [BurstCompile]
     struct GetHarmonicTrapsJob : IJobForEachWithEntity<Translation, HarmonicTrap>
     {
-        public NativeArray<HarmonicTrap> Traps;
-        public NativeArray<Translation> TrapPositions;
+        public NativeArray<Trap> Traps;
 
         public void Execute(Entity e, int i,
             [ReadOnly] ref Translation translation, [ReadOnly] ref HarmonicTrap trap)
         {
-            Traps[i] = trap;
-            TrapPositions[i] = translation;
+            Traps[i] = new Trap
+            {
+                HarmonicTrap = trap,
+                Position = translation
+            };
         }
     }
 
@@ -67,8 +71,7 @@ public class HarmonicTrapSystem : JobComponentSystem
     [BurstCompile]
     struct CalculateHarmonicTrapForces : IJobChunk
     {
-        [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<HarmonicTrap> Traps;
-        [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<Translation> TrapPositions;
+        [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<Trap> Traps;
         [ReadOnly] public ArchetypeChunkComponentType<Translation> AtomPositions;
         public ArchetypeChunkComponentType<Force> AtomForces;
 
@@ -82,7 +85,7 @@ public class HarmonicTrapSystem : JobComponentSystem
                 var force = atomForces[atomId];
                 for (int trapId = 0; trapId < Traps.Length; trapId++)
                 {
-                    force.Value += Traps[trapId].SpringConstant * (TrapPositions[trapId].Value - atomPos[atomId].Value);
+                    force.Value += Traps[trapId].HarmonicTrap.SpringConstant * (Traps[trapId].Position.Value - atomPos[atomId].Value);
                 }
                 atomForces[atomId] = force;
             }
