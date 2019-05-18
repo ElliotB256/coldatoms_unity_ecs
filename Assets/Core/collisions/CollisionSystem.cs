@@ -28,13 +28,14 @@ public class CollisionSystem : JobComponentSystem
         var getUniqueKeysJH = new GetUniqueKeysJob { BinnedAtoms = BinnedAtoms, UniqueKeys = UniqueBinIds }.Schedule(sortAtomsJH);
         var doCollisionsJH = new DoCollisionsJob { Atoms = Atoms, AtomVelocities = AtomVelocities, BinIDs = UniqueBinIds, BinnedAtoms = BinnedAtoms }.Schedule(UniqueBinIds, 4, getUniqueKeysJH);
         var updateAtomVelocitiesJH = new UpdateAtomVelocitiesJob { AtomVelocities = AtomVelocities }.Schedule(AtomQuery, doCollisionsJH);
-        var disposeJH = new DisposeJob { Atoms = Atoms, BinnedAtoms = BinnedAtoms, BinIDs = UniqueBinIds };
+        var disposeJH = new DisposeJob { Atoms = Atoms, BinnedAtoms = BinnedAtoms, BinIDs = UniqueBinIds, AtomVelocities = AtomVelocities }.Schedule(updateAtomVelocitiesJH);
 
-        return updateAtomVelocitiesJH;
+        return disposeJH;
     }
 
     protected override void OnCreateManager()
     {
+        //Enabled = false;
         AtomQuery = GetEntityQuery(new EntityQueryDesc
         {
             All = new[] {
@@ -167,7 +168,7 @@ public class CollisionSystem : JobComponentSystem
 
     struct UpdateAtomVelocitiesJob : IJobForEachWithEntity<Velocity>
     {
-        [DeallocateOnJobCompletion] public NativeArray<Velocity> AtomVelocities;
+        public NativeArray<Velocity> AtomVelocities;
 
         public void Execute(Entity entity, int index, ref Velocity velocity)
         {
@@ -180,12 +181,14 @@ public class CollisionSystem : JobComponentSystem
         public NativeArray<Atom> Atoms;
         public NativeList<int> BinIDs;
         public NativeMultiHashMap<int, int> BinnedAtoms;
+        public NativeArray<Velocity> AtomVelocities;
 
         public void Execute()
         {
             Atoms.Dispose();
             BinIDs.Dispose();
             BinnedAtoms.Dispose();
+            AtomVelocities.Dispose();
         }
     }
 
