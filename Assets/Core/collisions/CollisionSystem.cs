@@ -1,6 +1,7 @@
 ﻿using System;
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -11,12 +12,15 @@ using Unity.Transforms;
 /// 
 /// For fast performance, a HashMap Monte-Carlo method is used.
 /// </summary>
+[UpdateBefore(typeof(ForceCalculationSystems))]
 public class CollisionSystem : JobComponentSystem
 {
-    public static float COLLISION_CELL_SIZE = 0.5f;
+    public static float COLLISION_CELL_SIZE = 1f;
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
+        Cleanup();
+
         int atomNumber = AtomQuery.CalculateLength();
         Atoms = new NativeArray<Atom>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         AtomVelocities = new NativeArray<Velocity>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
@@ -26,11 +30,11 @@ public class CollisionSystem : JobComponentSystem
         var getAtomDataJH = new GetAtomDataJob { Atoms = Atoms, AtomVelocities = AtomVelocities }.Schedule(AtomQuery, inputDeps);
         var sortAtomsJH = new SortAtomsJob { BinnedAtoms = BinnedAtoms.ToConcurrent(), CellSize = COLLISION_CELL_SIZE }.Schedule(AtomQuery, getAtomDataJH);
         var getUniqueKeysJH = new GetUniqueKeysJob { BinnedAtoms = BinnedAtoms, UniqueKeys = UniqueBinIds }.Schedule(sortAtomsJH);
-        var doCollisionsJH = new DoCollisionsJob { Atoms = Atoms, AtomVelocities = AtomVelocities, BinIDs = UniqueBinIds, BinnedAtoms = BinnedAtoms }.Schedule(UniqueBinIds, 4, getUniqueKeysJH);
+        var doCollisionsJH = new DoCollisionsJob { Atoms = Atoms, AtomVelocities = AtomVelocities, BinIDs = UniqueBinIds, BinnedAtoms = BinnedAtoms }.Schedule(UniqueBinIds, 1, getUniqueKeysJH);
         var updateAtomVelocitiesJH = new UpdateAtomVelocitiesJob { AtomVelocities = AtomVelocities }.Schedule(AtomQuery, doCollisionsJH);
-        var disposeJH = new DisposeJob { Atoms = Atoms, BinnedAtoms = BinnedAtoms, BinIDs = UniqueBinIds, AtomVelocities = AtomVelocities }.Schedule(updateAtomVelocitiesJH);
 
-        return disposeJH;
+        _hasRun = true;
+        return updateAtomVelocitiesJH;
     }
 
     protected override void OnCreateManager()
@@ -60,11 +64,29 @@ public class CollisionSystem : JobComponentSystem
     NativeArray<Velocity> AtomVelocities;
     NativeList<int> UniqueBinIds;
 
+    bool _hasRun = false;
+    public void Cleanup()
+    {
+        if (_hasRun)
+        {
+            Atoms.Dispose();
+            AtomVelocities.Dispose();
+            UniqueBinIds.Dispose();
+            BinnedAtoms.Dispose();
+        }
+    }
+
+    protected override void OnDestroyManager()
+    {
+        Cleanup();
+    }
+
     /// <summary>
     /// Spatial Hashmap of Atoms. Key: bin, Values: atomId
     /// </summary>
     NativeMultiHashMap<int, int> BinnedAtoms;
 
+    [BurstCompile]
     struct GetAtomDataJob : IJobForEachWithEntity<Translation, ScatteringRadius, Mass, Velocity>
     {
         public NativeArray<Atom> Atoms;
@@ -105,13 +127,15 @@ public class CollisionSystem : JobComponentSystem
         public void Execute()
         {
             var (keys, length) = BinnedAtoms.GetUniqueKeyArray(Allocator.Temp);
+            //keys.CopyTo(UniqueKeys);
+            //    UniqueKeys.AddRange(NativeArrayUnsafeUtility.GetUnsafePtr(keys), length);
+            //UniqueKeys.Capacity = length;
             for (int i = 0; i < length; i++)
-            {
                 UniqueKeys.Add(keys[i]);
-            }
         }
     }
 
+    [BurstCompile]
     struct DoCollisionsJob : IJobParallelFor
     {
         [NativeDisableParallelForRestriction] [ReadOnly] public NativeArray<Atom> Atoms;
@@ -166,6 +190,7 @@ public class CollisionSystem : JobComponentSystem
         }
     }
 
+    [BurstCompile]
     struct UpdateAtomVelocitiesJob : IJobForEachWithEntity<Velocity>
     {
         public NativeArray<Velocity> AtomVelocities;
@@ -175,21 +200,4 @@ public class CollisionSystem : JobComponentSystem
             velocity = AtomVelocities[index];
         }
     }
-
-    struct DisposeJob : IJob
-    {
-        public NativeArray<Atom> Atoms;
-        public NativeList<int> BinIDs;
-        public NativeMultiHashMap<int, int> BinnedAtoms;
-        public NativeArray<Velocity> AtomVelocities;
-
-        public void Execute()
-        {
-            Atoms.Dispose();
-            BinIDs.Dispose();
-            BinnedAtoms.Dispose();
-            AtomVelocities.Dispose();
-        }
-    }
-
 }
