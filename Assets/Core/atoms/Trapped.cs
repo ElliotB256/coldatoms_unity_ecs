@@ -7,4 +7,5 @@ using Unity.Entities;
 [Serializable]
 public struct Trapped : IComponentData
 {
+    public Boolean Value;
 }

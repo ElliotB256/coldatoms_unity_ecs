@@ -15,6 +15,6 @@ public class AtomProxy : MonoBehaviour, IConvertGameObjectToEntity
         dstManager.AddComponentData(entity, new Force());
         dstManager.AddComponentData(entity, new PrevForce());
         dstManager.AddComponentData(entity, new ScatteringRadius { Value = ScatteringRadius });
-        dstManager.AddComponentData(entity, new Trapped());
+        dstManager.AddComponentData(entity, new Trapped { Value = new Boolean(true)});
     }
 }
