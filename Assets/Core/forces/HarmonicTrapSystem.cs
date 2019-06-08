@@ -43,8 +43,7 @@ public class HarmonicTrapSystem : JobComponentSystem
         {
             Traps = Traps,
             AtomPositions = GetArchetypeChunkComponentType<Translation>(true),
-            AtomForces = GetArchetypeChunkComponentType<Force>(false),
-            IsTrapped = GetArchetypeChunkComponentType<Trapped>(true)
+            AtomForces = GetArchetypeChunkComponentType<Force>(false)
         }.Schedule(TrappedAtomQuery, getHarmonicTrapsJH);
 
         return calculateHarmonicForcesJH;
@@ -74,24 +73,19 @@ public class HarmonicTrapSystem : JobComponentSystem
     {
         [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<Trap> Traps;
         [ReadOnly] public ArchetypeChunkComponentType<Translation> AtomPositions;
-        [ReadOnly] public ArchetypeChunkComponentType<Trapped> IsTrapped;
         public ArchetypeChunkComponentType<Force> AtomForces;
 
         public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
         {
             var atomPos = chunk.GetNativeArray(AtomPositions);
             var atomForces = chunk.GetNativeArray(AtomForces);
-            var isTrapped = chunk.GetNativeArray(IsTrapped);
 
             for (int atomId = 0; atomId < atomForces.Length; atomId++)
             {
                 var force = atomForces[atomId];
                 for (int trapId = 0; trapId < Traps.Length; trapId++)
                 {
-                    if (isTrapped[atomId].Value.ToBool())
-                    {
-                        force.Value += Traps[trapId].HarmonicTrap.SpringConstant * (Traps[trapId].Position.Value - atomPos[atomId].Value);
-                    }
+                    force.Value += Traps[trapId].HarmonicTrap.SpringConstant * (Traps[trapId].Position.Value - atomPos[atomId].Value);
                 }
                 atomForces[atomId] = force;
             }

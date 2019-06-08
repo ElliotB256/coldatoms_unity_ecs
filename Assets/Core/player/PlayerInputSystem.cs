@@ -1,25 +1,19 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using Unity.Entities;
 using Unity.Jobs;
-
 
 /// <summary>
 /// A system that monitors the player key input
 /// </summary>
 public class PlayerInputSystem : JobComponentSystem
 {
-
     struct PlayerInputJob : IJobForEach<PlayerInputs>
     {
-        public Boolean upbutton;
-        public Boolean downbutton;
+        public PlayerInputs input;
 
         public void Execute(ref PlayerInputs data)
         {
-            data.UpButton = upbutton;
-            data.DownButton = downbutton;
+            data = input;
         }
     }
 
@@ -28,12 +22,9 @@ public class PlayerInputSystem : JobComponentSystem
     /// </summary>
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        var job = new PlayerInputJob
-        {
-            upbutton = new Boolean(Input.GetKeyDown(KeyCode.UpArrow)),
-            downbutton = new Boolean(Input.GetKeyDown(KeyCode.DownArrow))
-        };
+        PlayerInputs input = new PlayerInputs();
+        input.VerticalAxis = Input.GetAxis("Vertical");
+        var job = new PlayerInputJob { input = input };
         return job.Schedule(this, inputDeps);
     }
-
 }

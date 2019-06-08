@@ -46,7 +46,8 @@ public class CollisionSystem : JobComponentSystem
                     ComponentType.ReadOnly<Translation>(),
                     ComponentType.ReadOnly<ScatteringRadius>(),
                     ComponentType.ReadOnly<Mass>(),
-                    ComponentType.ReadWrite<Velocity>()
+                    ComponentType.ReadWrite<Velocity>(),
+                    ComponentType.ReadWrite<Trapped>()
                 }
         });
     }

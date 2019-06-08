@@ -7,6 +7,5 @@ using Unity.Entities;
 [Serializable]
 public struct PlayerInputs : IComponentData
 {
-    public Boolean UpButton;
-    public Boolean DownButton;
+    public float VerticalAxis;
 }

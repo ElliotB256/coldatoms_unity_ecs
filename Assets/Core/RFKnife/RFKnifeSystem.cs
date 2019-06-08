@@ -4,6 +4,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
+using UnityEngine;
 
 /// <summary>
 /// Untrap atoms that are outside of RF knife sphere.
@@ -11,25 +12,39 @@ using Unity.Transforms;
 [UpdateBefore(typeof(ForceCalculationSystems))]
 public class RFKnifeSystem : JobComponentSystem
 {
-    public float KnifeRadius = 30.0f;
-    public float3 KnifePosition = new float3(0, 1, 0);
-
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
-        return new UntrapJob {radius = KnifeRadius, knifePosition = KnifePosition}.Schedule(this, inputDependencies);
+        var jobHandle = new UntrapJob {
+            rOverTwoSq = Mathf.Pow(GetRFKnifeSystem.Radius/2f,2f),
+            knifePosition = GetRFKnifeSystem.Position,
+            Buffer = CommandBufferSystem.CreateCommandBuffer().ToConcurrent()
+        }.Schedule(this, inputDependencies);
+        CommandBufferSystem.AddJobHandleForProducer(jobHandle);
+        return jobHandle;
     }
 
-    [BurstCompile]
-    struct UntrapJob : IJobForEach<Translation, Trapped>
+    private RFKnifeCommandBufferSystem CommandBufferSystem;
+    private GetRFKnifeSystem GetRFKnifeSystem;
+
+    protected override void OnStartRunning()
     {
-        public float radius;
+        CommandBufferSystem = World.GetOrCreateSystem<RFKnifeCommandBufferSystem>();
+        GetRFKnifeSystem = World.GetOrCreateSystem<GetRFKnifeSystem>();
+    }
+
+    [RequireComponentTag(typeof(Trapped))]
+    struct UntrapJob : IJobForEachWithEntity<Translation>
+    {
+        public float rOverTwoSq;
         public float3 knifePosition;
+        [ReadOnly] public EntityCommandBuffer.Concurrent Buffer;
 
         public void Execute(
-            [ReadOnly] ref Translation position, ref Trapped trapped)
+            Entity e, int i,
+            [ReadOnly] ref Translation position)
         {
-            // Assuming RF Knife is located at (0,1,0) for now
-            if (math.lengthsq(position.Value - knifePosition) > radius) { trapped.Value = new Boolean(false); }
+            if (math.lengthsq(position.Value - knifePosition) > rOverTwoSq)
+                Buffer.RemoveComponent<Trapped>(i, e);
         }
     }
 
