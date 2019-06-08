@@ -10,13 +10,14 @@ using Unity.Mathematics;
 [UpdateInGroup(typeof(ForceCalculationSystems))]
 public class GravitySystem : JobComponentSystem
 {
-    public const float GRAVITATIONAL_CONSTANT = 2.0f;
+    public const float GRAVITATIONAL_CONSTANT = 20.0f;
 
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
         return new ApplyGravityJob { g = GRAVITATIONAL_CONSTANT * math.float3(0f, -1f, 0f) }.Schedule(this, inputDependencies);
     }
 
+    [ExcludeComponent(typeof(Trapped))]
     [BurstCompile]
     struct ApplyGravityJob : IJobForEach<Mass, Force>
     {
