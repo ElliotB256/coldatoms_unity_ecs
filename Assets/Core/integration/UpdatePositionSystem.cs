@@ -30,7 +30,7 @@ public class UpdatePositionSystem : JobComponentSystem
 
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
-        var job = new UpdateTranslationJob() { DeltaTime = Time.fixedDeltaTime };
+        var job = new UpdateTranslationJob() { DeltaTime = Time.deltaTime };
         return job.Schedule(this, inputDependencies);
     }
 }
