@@ -14,6 +14,9 @@ public class AtomCloudProxy : MonoBehaviour, IConvertGameObjectToEntity, IDeclar
     [Tooltip("Number of atoms to spawn.")]
     public int Number = 10;
 
+    [Tooltip("Velocity scale of spawned atoms.")]
+    public float SpawnVelocities = 1f;
+
     public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
         var prefab = conversionSystem.GetPrimaryEntity(Archetype);
@@ -21,7 +24,8 @@ public class AtomCloudProxy : MonoBehaviour, IConvertGameObjectToEntity, IDeclar
         {
             Atom = prefab,
             Radius = Radius,
-            Number = Number
+            Number = Number,
+            SpawnVelocities = SpawnVelocities
         };
         dstManager.AddComponentData(entity, atomCloud);
     }

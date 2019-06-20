@@ -40,6 +40,15 @@ public class AtomCloudSystem : JobComponentSystem
                     r * math.cos(theta)
                     );
                 CommandBuffer.SetComponent(index, instance, new Translation { Value = position });
+
+                // Give random velocities
+                var velocity = new float3(
+                    Random.NextFloat(-1f, 1f),
+                    Random.NextFloat(-1f, 1f),
+                    Random.NextFloat(-1f, 1f)
+                ) * cloud.SpawnVelocities;
+                CommandBuffer.SetComponent(index, instance, new Velocity { Value = velocity });
+                
             }
 
             CommandBuffer.DestroyEntity(index, entity);

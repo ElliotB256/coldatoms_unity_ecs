@@ -8,4 +8,5 @@ public struct AtomCloud : IComponentData
     public Entity Atom;
     public int Number;
     public float Radius;
+    public float SpawnVelocities;
 }
