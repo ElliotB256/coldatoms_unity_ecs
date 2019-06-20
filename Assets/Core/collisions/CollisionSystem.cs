@@ -173,7 +173,8 @@ public class CollisionSystem : JobComponentSystem
 
         public bool TestCollision(ref int id1, ref int id2)
         {
-            return math.lengthsq(Atoms[id1].translation.Value - Atoms[id2].translation.Value) < math.pow(Atoms[id1].radius.Value + Atoms[id2].radius.Value, 2f);
+            bool overlaps = math.lengthsq(Atoms[id1].translation.Value - Atoms[id2].translation.Value) < math.pow(Atoms[id1].radius.Value + Atoms[id2].radius.Value, 2f);
+            return overlaps;
         }
 
         public void Collide(ref int id1, ref int id2)
@@ -185,9 +186,14 @@ public class CollisionSystem : JobComponentSystem
             float3 vel1 = AtomVelocities[id1].Value - comv;
             float3 vel2 = AtomVelocities[id2].Value - comv;
 
-            // swap velocities in CoM frame
-            AtomVelocities[id1] = new Velocity { Value = comv + vel2 };
-            AtomVelocities[id2] = new Velocity { Value = comv + vel1 };
+            //Only swap if velocities are facing each other in com frame
+            if (math.dot(vel1, vel2) < 0f)
+            {
+
+                // swap velocities in CoM frame
+                AtomVelocities[id1] = new Velocity { Value = comv + vel2 };
+                AtomVelocities[id2] = new Velocity { Value = comv + vel1 };
+            }
         }
     }
 
