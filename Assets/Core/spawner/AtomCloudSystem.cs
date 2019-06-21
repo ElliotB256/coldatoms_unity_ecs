@@ -39,7 +39,7 @@ public class AtomCloudSystem : JobComponentSystem
                     r * math.sin(theta) * math.sin(phi),
                     r * math.cos(theta)
                     );
-                CommandBuffer.SetComponent(index, instance, new Translation { Value = position });
+                CommandBuffer.SetComponent(index, instance, new Translation { Value = position + location.Position });
 
                 // Give random velocities
                 var velocity = new float3(

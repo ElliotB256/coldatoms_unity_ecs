@@ -10,9 +10,11 @@ public class GetRFKnifeSystem : ComponentSystem
 {
     public float Radius;
     public float3 Position;
+    public bool KnifeExists;
 
     protected override void OnUpdate()
     {
+        KnifeExists = false;
         Entities
             .With(RFKnives)
             .ForEach(
@@ -20,6 +22,7 @@ public class GetRFKnifeSystem : ComponentSystem
                 {
                     Radius = r.Value;
                     Position = t.Value;
+                    KnifeExists = true;
                 }
         );
     }

@@ -14,8 +14,11 @@ public class RFKnifeSystem : JobComponentSystem
 {
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
-        var jobHandle = new UntrapJob {
-            rOverTwoSq = Mathf.Pow(GetRFKnifeSystem.Radius/2f,2f),
+        if (!GetRFKnifeSystem.KnifeExists)
+            return inputDependencies;
+        var jobHandle = new UntrapJob
+        {
+            rOverTwoSq = Mathf.Pow(GetRFKnifeSystem.Radius / 2f, 2f),
             knifePosition = GetRFKnifeSystem.Position,
             Buffer = CommandBufferSystem.CreateCommandBuffer().ToConcurrent()
         }.Schedule(this, inputDependencies);
