@@ -10,7 +10,7 @@ public class SavePrevForceSystem : JobComponentSystem
     struct SavePrevForceJob : IJobForEach<Force, PrevForce>
     {   
         public void Execute(
-            ref Force force, [ReadOnly] ref PrevForce oldForce)
+            [ReadOnly] ref Force force, ref PrevForce oldForce)
         {
             oldForce.Value = force.Value;
         }

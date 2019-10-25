@@ -28,7 +28,7 @@ public class DoubleWellTrapSystem : JobComponentSystem
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
         // Get harmonic traps and load them into job memory.
-        int trapCount = DoubleWellTrapQuery.CalculateLength();
+        int trapCount = DoubleWellTrapQuery.CalculateEntityCount();
         Traps = new NativeArray<Trap>(trapCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
         var getHarmonicTrapsJH = new GetDoubleWellsJob

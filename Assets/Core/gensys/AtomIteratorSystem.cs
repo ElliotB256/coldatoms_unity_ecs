@@ -32,7 +32,7 @@ public abstract class AtomIteratorSystem<TEffector, TAtomComponent, TProcess> : 
 
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
-        int trapCount = AtomIteratorQuery.CalculateLength();
+        int trapCount = AtomIteratorQuery.CalculateEntityCount();
         Effectors = new NativeArray<Effector>(trapCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
         var getEffectorsJH = new GetEffectorsJob

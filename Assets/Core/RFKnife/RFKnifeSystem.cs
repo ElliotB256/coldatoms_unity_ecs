@@ -40,7 +40,7 @@ public class RFKnifeSystem : JobComponentSystem
     {
         public float rSq;
         public float3 knifePosition;
-        [ReadOnly] public EntityCommandBuffer.Concurrent Buffer;
+        public EntityCommandBuffer.Concurrent Buffer;
 
         public void Execute(
             Entity e, int i,

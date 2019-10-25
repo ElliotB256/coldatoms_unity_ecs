@@ -31,7 +31,7 @@ public class HarmonicTrapSystem : JobComponentSystem
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
         // Get harmonic traps and load them into job memory.
-        int trapCount = HarmonicTrapQuery.CalculateLength();
+        int trapCount = HarmonicTrapQuery.CalculateEntityCount();
         Traps = new NativeArray<Trap>(trapCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
         var getHarmonicTrapsJH = new GetHarmonicTrapsJob

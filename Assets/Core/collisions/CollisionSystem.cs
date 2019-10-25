@@ -21,7 +21,7 @@ public class CollisionSystem : JobComponentSystem
     {
         Cleanup();
 
-        int atomNumber = AtomQuery.CalculateLength();
+        int atomNumber = AtomQuery.CalculateEntityCount();
         Atoms = new NativeArray<Atom>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         AtomVelocities = new NativeArray<Velocity>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         BinnedAtoms = new NativeMultiHashMap<int, int>(atomNumber, Allocator.TempJob);
@@ -30,7 +30,7 @@ public class CollisionSystem : JobComponentSystem
         var getAtomDataJH = new GetAtomDataJob { Atoms = Atoms, AtomVelocities = AtomVelocities }.Schedule(AtomQuery, inputDeps);
         var sortAtomsJH = new SortAtomsJob { BinnedAtoms = BinnedAtoms.ToConcurrent(), CellSize = COLLISION_CELL_SIZE }.Schedule(AtomQuery, getAtomDataJH);
         var getUniqueKeysJH = new GetUniqueKeysJob { BinnedAtoms = BinnedAtoms, UniqueKeys = UniqueBinIds }.Schedule(sortAtomsJH);
-        var doCollisionsJH = new DoCollisionsJob { Atoms = Atoms, AtomVelocities = AtomVelocities, BinIDs = UniqueBinIds, BinnedAtoms = BinnedAtoms }.Schedule(UniqueBinIds, 1, getUniqueKeysJH);
+        var doCollisionsJH = new DoCollisionsJob { Atoms = Atoms, AtomVelocities = AtomVelocities, BinIDs = UniqueBinIds, BinnedAtoms = BinnedAtoms }.Schedule(atomNumber, 1, getUniqueKeysJH);
         var updateAtomVelocitiesJH = new UpdateAtomVelocitiesJob { AtomVelocities = AtomVelocities }.Schedule(AtomQuery, doCollisionsJH);
 
         _hasRun = true;
@@ -150,6 +150,8 @@ public class CollisionSystem : JobComponentSystem
         /// <param name="index"></param>
         public void Execute(int index)
         {
+            if (index >= BinIDs.Length)
+                return;
             int binId = BinIDs[index];
             int outerLoopIndex = 0;
             int innerLoopIndex = 0;
