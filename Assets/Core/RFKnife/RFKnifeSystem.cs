@@ -15,7 +15,7 @@ public class RFKnifeSystem : JobComponentSystem
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
         var jobHandle = new UntrapJob {
-            rOverTwoSq = Mathf.Pow(GetRFKnifeSystem.Radius/2f,2f),
+            rSq = Mathf.Pow(GetRFKnifeSystem.Radius,2f),
             knifePosition = GetRFKnifeSystem.Position,
             Buffer = CommandBufferSystem.CreateCommandBuffer().ToConcurrent()
         }.Schedule(this, inputDependencies);
@@ -35,7 +35,7 @@ public class RFKnifeSystem : JobComponentSystem
     [RequireComponentTag(typeof(Trapped))]
     struct UntrapJob : IJobForEachWithEntity<Translation>
     {
-        public float rOverTwoSq;
+        public float rSq;
         public float3 knifePosition;
         [ReadOnly] public EntityCommandBuffer.Concurrent Buffer;
 
@@ -43,7 +43,7 @@ public class RFKnifeSystem : JobComponentSystem
             Entity e, int i,
             [ReadOnly] ref Translation position)
         {
-            if (math.lengthsq(position.Value - knifePosition) > rOverTwoSq)
+            if (math.lengthsq(position.Value - knifePosition) > rSq)
                 Buffer.RemoveComponent<Trapped>(i, e);
         }
     }

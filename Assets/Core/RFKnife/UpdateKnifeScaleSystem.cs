@@ -18,7 +18,7 @@ public class UpdateKnifeScaleSystem : JobComponentSystem
             [ReadOnly] ref Radius radius,
             ref Scale scale)
         {
-            scale.Value = radius.Value;
+            scale.Value = radius.Value * 2f;
         }
     }
 
