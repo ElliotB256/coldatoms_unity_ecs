@@ -26,15 +26,17 @@ public class CollisionSystem : JobComponentSystem
         AtomVelocities = new NativeArray<Velocity>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         BinnedAtoms = new NativeMultiHashMap<int, int>(atomNumber, Allocator.TempJob);
         UniqueBinIds = new NativeList<int>(atomNumber, Allocator.TempJob);
+        Collided = new NativeArray<bool>(atomNumber, Allocator.TempJob, NativeArrayOptions.ClearMemory);
 
         var getAtomDataJH = new GetAtomDataJob { Atoms = Atoms, AtomVelocities = AtomVelocities }.Schedule(AtomQuery, inputDeps);
-        var sortAtomsJH = new SortAtomsJob { BinnedAtoms = BinnedAtoms.ToConcurrent(), CellSize = COLLISION_CELL_SIZE }.Schedule(AtomQuery, getAtomDataJH);
+        var sortAtomsJH = new SortAtomsJob { BinnedAtoms = BinnedAtoms.AsParallelWriter(), CellSize = COLLISION_CELL_SIZE }.Schedule(AtomQuery, getAtomDataJH);
         var getUniqueKeysJH = new GetUniqueKeysJob { BinnedAtoms = BinnedAtoms, UniqueKeys = UniqueBinIds }.Schedule(sortAtomsJH);
-        var doCollisionsJH = new DoCollisionsJob { Atoms = Atoms, AtomVelocities = AtomVelocities, BinIDs = UniqueBinIds, BinnedAtoms = BinnedAtoms }.Schedule(atomNumber, 1, getUniqueKeysJH);
+        var doCollisionsJH = new DoCollisionsJob { Atoms = Atoms, AtomVelocities = AtomVelocities, BinIDs = UniqueBinIds, BinnedAtoms = BinnedAtoms, Collided = Collided }.Schedule(atomNumber, 1, getUniqueKeysJH);
         var updateAtomVelocitiesJH = new UpdateAtomVelocitiesJob { AtomVelocities = AtomVelocities }.Schedule(AtomQuery, doCollisionsJH);
+        var updateCollisionStatsJH = new UpdateCollisionStatsJob { Collided = Collided }.Schedule(AtomQuery, doCollisionsJH);
 
         _hasRun = true;
-        return updateAtomVelocitiesJH;
+        return JobHandle.CombineDependencies(updateAtomVelocitiesJH, updateCollisionStatsJH);
     }
 
     protected override void OnCreateManager()
@@ -47,7 +49,8 @@ public class CollisionSystem : JobComponentSystem
                     ComponentType.ReadOnly<ScatteringRadius>(),
                     ComponentType.ReadOnly<Mass>(),
                     ComponentType.ReadWrite<Velocity>(),
-                    ComponentType.ReadWrite<Trapped>()
+                    ComponentType.ReadWrite<Trapped>(),
+                    ComponentType.ReadWrite<CollisionStats>()
                 }
         });
     }
@@ -64,6 +67,7 @@ public class CollisionSystem : JobComponentSystem
     NativeArray<Atom> Atoms;
     NativeArray<Velocity> AtomVelocities;
     NativeList<int> UniqueBinIds;
+    NativeArray<bool> Collided;
 
     bool _hasRun = false;
     public void Cleanup()
@@ -74,6 +78,7 @@ public class CollisionSystem : JobComponentSystem
             AtomVelocities.Dispose();
             UniqueBinIds.Dispose();
             BinnedAtoms.Dispose();
+            Collided.Dispose();
         }
     }
 
@@ -111,7 +116,7 @@ public class CollisionSystem : JobComponentSystem
     struct SortAtomsJob : IJobForEachWithEntity<Translation>
     {
         [ReadOnly] public float CellSize;
-        public NativeMultiHashMap<int, int>.Concurrent BinnedAtoms;
+        public NativeMultiHashMap<int, int>.ParallelWriter BinnedAtoms;
 
         public void Execute(Entity entity, int index, [ReadOnly] ref Translation position)
         {
@@ -143,6 +148,10 @@ public class CollisionSystem : JobComponentSystem
         [NativeDisableParallelForRestriction] public NativeArray<Velocity> AtomVelocities;
         [NativeDisableParallelForRestriction] [ReadOnly] public NativeList<int> BinIDs;
         [NativeDisableParallelForRestriction] [ReadOnly] public NativeMultiHashMap<int, int> BinnedAtoms;
+        /// <summary>
+        /// Set to true for atoms that have collided
+        /// </summary>
+        [NativeDisableParallelForRestriction] public NativeArray<bool> Collided;
 
         /// <summary>
         /// Enumerate through each bin of the hash map, and collide atoms within that bin.
@@ -164,6 +173,8 @@ public class CollisionSystem : JobComponentSystem
                 {
                     if (TestCollision(ref outerID, ref innerID))
                     {
+                        Collided[outerID] = true;
+                        Collided[innerID] = true;
                         Collide(ref outerID, ref innerID);
                     }
                     innerLoopIndex++;
@@ -207,6 +218,18 @@ public class CollisionSystem : JobComponentSystem
         public void Execute(Entity entity, int index, ref Velocity velocity)
         {
             velocity = AtomVelocities[index];
+        }
+    }
+
+    [BurstCompile]
+    struct UpdateCollisionStatsJob : IJobForEachWithEntity<CollisionStats>
+    {
+        public NativeArray<bool> Collided;
+
+        public void Execute(Entity entity, int index, ref CollisionStats stats)
+        {
+            if (Collided[index])
+                stats.TimeSinceLastCollision = 0f;
         }
     }
 }

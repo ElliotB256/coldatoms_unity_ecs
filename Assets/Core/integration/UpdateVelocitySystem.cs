@@ -30,7 +30,7 @@ public class UpdateVelocitySystem : JobComponentSystem
 
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
-        var job = new UpdateTranslationJob() { DeltaTime = Time.deltaTime };
+        var job = new UpdateTranslationJob() { DeltaTime = Time.fixedDeltaTime };
         return job.Schedule(this, inputDependencies);
     }
 }
