@@ -26,6 +26,6 @@ public class RFKnifePlayerControlSystem : JobComponentSystem
 
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
-        return new PlayerControlRFKnifeJob { dT = Time.deltaTime }.Schedule(this, inputDependencies);
+        return new PlayerControlRFKnifeJob { dT = Time.DeltaTime }.Schedule(this, inputDependencies);
     }
 }

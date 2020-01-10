@@ -28,7 +28,8 @@ public class CollisionSystem : JobComponentSystem
         UniqueBinIds = new NativeList<int>(atomNumber, Allocator.TempJob);
         Collided = new NativeArray<bool>(atomNumber, Allocator.TempJob, NativeArrayOptions.ClearMemory);
 
-        var getAtomDataJH = new GetAtomDataJob { Atoms = Atoms, AtomVelocities = AtomVelocities }.Schedule(AtomQuery, inputDeps);
+        var clearCollideJH = new ClearCollideJob { Collided = Collided }.Schedule(inputDeps);
+        var getAtomDataJH = new GetAtomDataJob { Atoms = Atoms, AtomVelocities = AtomVelocities }.Schedule(AtomQuery, clearCollideJH);
         var sortAtomsJH = new SortAtomsJob { BinnedAtoms = BinnedAtoms.AsParallelWriter(), CellSize = COLLISION_CELL_SIZE }.Schedule(AtomQuery, getAtomDataJH);
         var getUniqueKeysJH = new GetUniqueKeysJob { BinnedAtoms = BinnedAtoms, UniqueKeys = UniqueBinIds }.Schedule(sortAtomsJH);
         var doCollisionsJH = new DoCollisionsJob { Atoms = Atoms, AtomVelocities = AtomVelocities, BinIDs = UniqueBinIds, BinnedAtoms = BinnedAtoms, Collided = Collided }.Schedule(atomNumber, 1, getUniqueKeysJH);
@@ -173,8 +174,6 @@ public class CollisionSystem : JobComponentSystem
                 {
                     if (TestCollision(ref outerID, ref innerID))
                     {
-                        Collided[outerID] = true;
-                        Collided[innerID] = true;
                         Collide(ref outerID, ref innerID);
                     }
                     innerLoopIndex++;
@@ -202,10 +201,12 @@ public class CollisionSystem : JobComponentSystem
             //Only swap if velocities are facing each other in com frame
             if (math.dot(vel1, vel2) < 0f)
             {
-
                 // swap velocities in CoM frame
                 AtomVelocities[id1] = new Velocity { Value = comv + vel2 };
                 AtomVelocities[id2] = new Velocity { Value = comv + vel1 };
+
+                Collided[id1] = true;
+                Collided[id2] = true;
             }
         }
     }
@@ -230,6 +231,17 @@ public class CollisionSystem : JobComponentSystem
         {
             if (Collided[index])
                 stats.TimeSinceLastCollision = 0f;
+        }
+    }
+
+    struct ClearCollideJob : IJob
+    {
+        public NativeArray<bool> Collided;
+
+        public void Execute()
+        {
+            for (int i = 0; i < Collided.Length; i++)
+                Collided[i] = false;
         }
     }
 }

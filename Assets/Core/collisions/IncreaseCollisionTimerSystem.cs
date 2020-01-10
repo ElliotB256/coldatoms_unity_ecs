@@ -15,12 +15,12 @@ public class IncreaseCollisionTimerSystem : JobComponentSystem
         public void Execute(
             ref CollisionStats stat)
         {
-            stat.TimeSinceLastCollision += DeltaTime;
+            stat.TimeSinceLastCollision = stat.TimeSinceLastCollision + DeltaTime;
         }
     }
     
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
-        return new IncreaseCollisionTimerJob { DeltaTime = Time.deltaTime }.Schedule(this, inputDependencies);
+        return new IncreaseCollisionTimerJob { DeltaTime = Time.DeltaTime }.Schedule(this, inputDependencies);
     }
 }
