@@ -23,6 +23,8 @@ public class CollisionSystem : JobComponentSystem
         int atomNumber = AtomQuery.CalculateEntityCount();
         InitialiseMemory(atomNumber);
 
+        // Ideas for clearer syntax suggestions:
+        //
         // return new Scheduler(inputDeps)
         //    .Then.ForEachIn(AtomQuery, GetAtomData)
         //    .Then.ForEachIn(AtomQuery, SortIntoBins)
@@ -39,7 +41,8 @@ public class CollisionSystem : JobComponentSystem
         //    .ForEachIn(AtomQuery, UpdateAtomVelocities)
         //    .And.ForEachIn(AtomQuery, UpdateCollisionStats)
 
-        var getAtomDataJH = new GetAtomDataJob { Atoms = Atoms, AtomVelocities = AtomVelocities }.Schedule(AtomQuery, inputDeps);
+        var clearCollideJH = new ClearCollideJob { Collided = Collided }.Schedule(inputDeps);
+        var getAtomDataJH = new GetAtomDataJob { Atoms = Atoms, AtomVelocities = AtomVelocities }.Schedule(AtomQuery, clearCollideJH);
         var sortAtomsJH = new SortAtomsJob { BinnedAtoms = BinnedAtoms.AsParallelWriter(), CellSize = COLLISION_CELL_SIZE }.Schedule(AtomQuery, getAtomDataJH);
         var getUniqueKeysJH = new GetUniqueKeysJob { BinnedAtoms = BinnedAtoms, UniqueKeys = UniqueBinIds }.Schedule(sortAtomsJH);
         var doCollisionsJH = new DoCollisionsJob { dT = Time.fixedDeltaTime, Atoms = Atoms, AtomVelocities = AtomVelocities, BinIDs = UniqueBinIds, BinnedAtoms = BinnedAtoms, Collided = Collided }.Schedule(atomNumber, 1, getUniqueKeysJH);
@@ -62,7 +65,6 @@ public class CollisionSystem : JobComponentSystem
 
     protected override void OnCreateManager()
     {
-        //Enabled = false;
         AtomQuery = GetEntityQuery(new EntityQueryDesc
         {
             All = new[] {
@@ -203,11 +205,7 @@ public class CollisionSystem : JobComponentSystem
                 do
                 {
                     if (TestCollision(ref outerID, ref innerID))
-                    {
-                        Collided[outerID] = true;
-                        Collided[innerID] = true;
                         Collide(outerID, innerID);
-                    }
                     innerLoopIndex++;
                 } while (innerLoopIndex < outerLoopIndex &&
                 BinnedAtoms.TryGetNextValue(out innerID, ref innerIterator));
@@ -278,6 +276,9 @@ public class CollisionSystem : JobComponentSystem
                 // swap velocities in CoM frame
                 AtomVelocities[a] = new Velocity { Value = comv + vel2 };
                 AtomVelocities[b] = new Velocity { Value = comv + vel1 };
+
+                Collided[a] = true;
+                Collided[b] = true;
             }
         }
     }
@@ -302,6 +303,17 @@ public class CollisionSystem : JobComponentSystem
         {
             if (Collided[index])
                 stats.TimeSinceLastCollision = 0f;
+        }
+    }
+
+    struct ClearCollideJob : IJob
+    {
+        public NativeArray<bool> Collided;
+
+        public void Execute()
+        {
+            for (int i = 0; i < Collided.Length; i++)
+                Collided[i] = false;
         }
     }
 }
