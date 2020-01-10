@@ -1,7 +1,6 @@
 ﻿using System;
 using Unity.Burst;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -9,37 +8,22 @@ using Unity.Transforms;
 using UnityEngine;
 
 /// <summary>
-/// A system that calculates collisions between pairs of atoms.
+/// Calculates collisions between pairs of atoms using a Monte-Carlo method.
 /// 
-/// For fast performance, a HashMap Monte-Carlo method is used.
+/// Note currently implemented - disabled by default.
 /// </summary>
 [UpdateBefore(typeof(ForceCalculationSystems))]
-public class CollisionSystem : JobComponentSystem
+public class MonteCarloCollisionSystem : JobComponentSystem
 {
+    /// <summary>
+    /// Size of a collision cell, in Unity units.
+    /// </summary>
     public static float COLLISION_CELL_SIZE = 1f;
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
         int atomNumber = AtomQuery.CalculateEntityCount();
         InitialiseMemory(atomNumber);
-
-        // Ideas for clearer syntax suggestions:
-        //
-        // return new Scheduler(inputDeps)
-        //    .Then.ForEachIn(AtomQuery, GetAtomData)
-        //    .Then.ForEachIn(AtomQuery, SortIntoBins)
-        //    .Then.Run(GetUniqueKeys)
-        //    .Then.For(AtomNumber, DoCollisions)
-        //    .Then.ForEachIn(AtomQuery, UpdateAtomVelocities)
-        //    .And.ForEachIn(AtomQuery, UpdateCollisionStats)
-
-        // return new Scheduler(inputDeps)
-        //    .ForEachIn(AtomQuery, GetAtomData)
-        //    .ForEachIn(AtomQuery, SortIntoBins)
-        //    .Run(GetUniqueKeys)
-        //    .For(AtomNumber, DoCollisions)
-        //    .ForEachIn(AtomQuery, UpdateAtomVelocities)
-        //    .And.ForEachIn(AtomQuery, UpdateCollisionStats)
 
         var clearCollideJH = new ClearCollideJob { Collided = Collided }.Schedule(inputDeps);
         var getAtomDataJH = new GetAtomDataJob { Atoms = Atoms, AtomVelocities = AtomVelocities }.Schedule(AtomQuery, clearCollideJH);
@@ -65,11 +49,12 @@ public class CollisionSystem : JobComponentSystem
 
     protected override void OnCreateManager()
     {
+        Enabled = false;
         AtomQuery = GetEntityQuery(new EntityQueryDesc
         {
             All = new[] {
                     ComponentType.ReadOnly<Translation>(),
-                    ComponentType.ReadOnly<ScatteringRadius>(),
+                    ComponentType.ReadOnly<CollisionRadius>(),
                     ComponentType.ReadOnly<Mass>(),
                     ComponentType.ReadWrite<Velocity>(),
                     ComponentType.ReadWrite<Trapped>(),
@@ -83,7 +68,7 @@ public class CollisionSystem : JobComponentSystem
     struct Atom
     {
         public Translation translation;
-        public ScatteringRadius radius;
+        public CollisionRadius radius;
         public Mass mass;
     }
 
@@ -116,14 +101,14 @@ public class CollisionSystem : JobComponentSystem
     NativeMultiHashMap<int, int> BinnedAtoms;
 
     [BurstCompile]
-    struct GetAtomDataJob : IJobForEachWithEntity<Translation, ScatteringRadius, Mass, Velocity>
+    struct GetAtomDataJob : IJobForEachWithEntity<Translation, CollisionRadius, Mass, Velocity>
     {
         public NativeArray<Atom> Atoms;
         public NativeArray<Velocity> AtomVelocities;
 
         public void Execute(Entity entity, int index,
             [ReadOnly] ref Translation translation,
-            [ReadOnly] ref ScatteringRadius radius,
+            [ReadOnly] ref CollisionRadius radius,
             [ReadOnly] ref Mass mass,
             [ReadOnly] ref Velocity velocity)
         {
@@ -168,7 +153,6 @@ public class CollisionSystem : JobComponentSystem
         /// Time delta used for update
         /// </summary>
         public float dT;
-        //public Random
         [NativeDisableParallelForRestriction] [ReadOnly] public NativeArray<Atom> Atoms;
         [NativeDisableParallelForRestriction] public NativeArray<Velocity> AtomVelocities;
         [NativeDisableParallelForRestriction] [ReadOnly] public NativeList<int> BinIDs;

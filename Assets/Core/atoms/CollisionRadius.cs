@@ -2,10 +2,10 @@
 using Unity.Entities;
 
 /// <summary>
-/// Radius of entity used for scattering calculations.
+/// Radius of entity used for collision calculations.
 /// </summary>
 [Serializable]
-public struct ScatteringRadius : IComponentData
+public struct CollisionRadius : IComponentData
 {
     public float Value;
 }
