@@ -6,6 +6,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
+using UnityEngine;
 
 /// <summary>
 /// A system that calculates collisions between pairs of atoms.
@@ -19,24 +20,44 @@ public class CollisionSystem : JobComponentSystem
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        Cleanup();
-
         int atomNumber = AtomQuery.CalculateEntityCount();
-        Atoms = new NativeArray<Atom>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        AtomVelocities = new NativeArray<Velocity>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        BinnedAtoms = new NativeMultiHashMap<int, int>(atomNumber, Allocator.TempJob);
-        UniqueBinIds = new NativeList<int>(atomNumber, Allocator.TempJob);
-        Collided = new NativeArray<bool>(atomNumber, Allocator.TempJob, NativeArrayOptions.ClearMemory);
+        InitialiseMemory(atomNumber);
+
+        // return new Scheduler(inputDeps)
+        //    .Then.ForEachIn(AtomQuery, GetAtomData)
+        //    .Then.ForEachIn(AtomQuery, SortIntoBins)
+        //    .Then.Run(GetUniqueKeys)
+        //    .Then.For(AtomNumber, DoCollisions)
+        //    .Then.ForEachIn(AtomQuery, UpdateAtomVelocities)
+        //    .And.ForEachIn(AtomQuery, UpdateCollisionStats)
+
+        // return new Scheduler(inputDeps)
+        //    .ForEachIn(AtomQuery, GetAtomData)
+        //    .ForEachIn(AtomQuery, SortIntoBins)
+        //    .Run(GetUniqueKeys)
+        //    .For(AtomNumber, DoCollisions)
+        //    .ForEachIn(AtomQuery, UpdateAtomVelocities)
+        //    .And.ForEachIn(AtomQuery, UpdateCollisionStats)
 
         var getAtomDataJH = new GetAtomDataJob { Atoms = Atoms, AtomVelocities = AtomVelocities }.Schedule(AtomQuery, inputDeps);
         var sortAtomsJH = new SortAtomsJob { BinnedAtoms = BinnedAtoms.AsParallelWriter(), CellSize = COLLISION_CELL_SIZE }.Schedule(AtomQuery, getAtomDataJH);
         var getUniqueKeysJH = new GetUniqueKeysJob { BinnedAtoms = BinnedAtoms, UniqueKeys = UniqueBinIds }.Schedule(sortAtomsJH);
-        var doCollisionsJH = new DoCollisionsJob { Atoms = Atoms, AtomVelocities = AtomVelocities, BinIDs = UniqueBinIds, BinnedAtoms = BinnedAtoms, Collided = Collided }.Schedule(atomNumber, 1, getUniqueKeysJH);
+        var doCollisionsJH = new DoCollisionsJob { dT = Time.fixedDeltaTime, Atoms = Atoms, AtomVelocities = AtomVelocities, BinIDs = UniqueBinIds, BinnedAtoms = BinnedAtoms, Collided = Collided }.Schedule(atomNumber, 1, getUniqueKeysJH);
         var updateAtomVelocitiesJH = new UpdateAtomVelocitiesJob { AtomVelocities = AtomVelocities }.Schedule(AtomQuery, doCollisionsJH);
         var updateCollisionStatsJH = new UpdateCollisionStatsJob { Collided = Collided }.Schedule(AtomQuery, doCollisionsJH);
 
         _hasRun = true;
         return JobHandle.CombineDependencies(updateAtomVelocitiesJH, updateCollisionStatsJH);
+    }
+
+    public void InitialiseMemory(int atomNumber)
+    {
+        Cleanup();
+        Atoms = new NativeArray<Atom>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        AtomVelocities = new NativeArray<Velocity>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        BinnedAtoms = new NativeMultiHashMap<int, int>(atomNumber, Allocator.TempJob);
+        UniqueBinIds = new NativeList<int>(atomNumber, Allocator.TempJob);
+        Collided = new NativeArray<bool>(atomNumber, Allocator.TempJob, NativeArrayOptions.ClearMemory);
     }
 
     protected override void OnCreateManager()
@@ -133,9 +154,6 @@ public class CollisionSystem : JobComponentSystem
         public void Execute()
         {
             var (keys, length) = BinnedAtoms.GetUniqueKeyArray(Allocator.Temp);
-            //keys.CopyTo(UniqueKeys);
-            //    UniqueKeys.AddRange(NativeArrayUnsafeUtility.GetUnsafePtr(keys), length);
-            //UniqueKeys.Capacity = length;
             for (int i = 0; i < length; i++)
                 UniqueKeys.Add(keys[i]);
         }
@@ -144,6 +162,11 @@ public class CollisionSystem : JobComponentSystem
     [BurstCompile]
     struct DoCollisionsJob : IJobParallelFor
     {
+        /// <summary>
+        /// Time delta used for update
+        /// </summary>
+        public float dT;
+        //public Random
         [NativeDisableParallelForRestriction] [ReadOnly] public NativeArray<Atom> Atoms;
         [NativeDisableParallelForRestriction] public NativeArray<Velocity> AtomVelocities;
         [NativeDisableParallelForRestriction] [ReadOnly] public NativeList<int> BinIDs;
@@ -152,6 +175,14 @@ public class CollisionSystem : JobComponentSystem
         /// Set to true for atoms that have collided
         /// </summary>
         [NativeDisableParallelForRestriction] public NativeArray<bool> Collided;
+
+        public void Execute2(int index)
+        {
+            if (index >= BinIDs.Length)
+                return;
+            int bin = BinIDs[index];
+            DoMonteCarloCollisions(bin);
+        }
 
         /// <summary>
         /// Enumerate through each bin of the hash map, and collide atoms within that bin.
@@ -175,7 +206,7 @@ public class CollisionSystem : JobComponentSystem
                     {
                         Collided[outerID] = true;
                         Collided[innerID] = true;
-                        Collide(ref outerID, ref innerID);
+                        Collide(outerID, innerID);
                     }
                     innerLoopIndex++;
                 } while (innerLoopIndex < outerLoopIndex &&
@@ -190,22 +221,63 @@ public class CollisionSystem : JobComponentSystem
             return overlaps;
         }
 
-        public void Collide(ref int id1, ref int id2)
+
+        /// <summary>
+        /// Performs collisions using a Monte Carlo approach.
+        /// 
+        /// The collision rate is given as $n \sigma v$, where $n$ is the density, \sigma is the cross section and $v$ is the atom velocity.
+        /// We define the cross section as 
+        /// </summary>
+        /// <param name="binID">bin within which to do collisions.</param>
+        public void DoMonteCarloCollisions(int bin)
+        {
+            int i = 0;
+            foreach (var atom1 in BinnedAtoms.GetValuesForKey(bin))
+            {
+                int j = 0;
+                foreach (var atom2 in BinnedAtoms.GetValuesForKey(bin))
+                {
+                    if (i < j)
+                        continue;
+
+                    // Calculate the collision radius for the two hard spheres.
+                    float collisionRadius = Atoms[atom1].radius.Value + Atoms[atom2].radius.Value;
+                    float crossSection = math.PI * collisionRadius * collisionRadius;
+
+                    // Determine the relative velocity between the two particles.
+                    float3 relativeVelocity = AtomVelocities[atom1].Value - AtomVelocities[atom2].Value;
+
+                    float collisionChance = dT * math.length(relativeVelocity) * crossSection / math.pow(COLLISION_CELL_SIZE, 3f);
+
+                    // if (collisionChance > some random)
+                    Collide(atom1, atom2);
+
+                    j++;
+                }
+                i++;
+            }
+        }
+
+        /// <summary>
+        /// Ellastically collides two atoms.
+        /// </summary>
+        /// <param name="a">index of first atom</param>
+        /// <param name="b">index of second atom</param>
+        public void Collide(int a, int b)
         {
             // Velocity in center of mass frame
-            float3 comv = (AtomVelocities[id1].Value + AtomVelocities[id2].Value) / 2f;
+            float3 comv = (AtomVelocities[a].Value + AtomVelocities[b].Value) / 2f;
 
             //transform velocities to CoM frame
-            float3 vel1 = AtomVelocities[id1].Value - comv;
-            float3 vel2 = AtomVelocities[id2].Value - comv;
+            float3 vel1 = AtomVelocities[a].Value - comv;
+            float3 vel2 = AtomVelocities[b].Value - comv;
 
             //Only swap if velocities are facing each other in com frame
             if (math.dot(vel1, vel2) < 0f)
             {
-
                 // swap velocities in CoM frame
-                AtomVelocities[id1] = new Velocity { Value = comv + vel2 };
-                AtomVelocities[id2] = new Velocity { Value = comv + vel1 };
+                AtomVelocities[a] = new Velocity { Value = comv + vel2 };
+                AtomVelocities[b] = new Velocity { Value = comv + vel1 };
             }
         }
     }
