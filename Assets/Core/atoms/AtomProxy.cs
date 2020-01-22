@@ -18,5 +18,6 @@ public class AtomProxy : MonoBehaviour, IConvertGameObjectToEntity
         dstManager.AddComponentData(entity, new Trapped());
         dstManager.AddComponentData(entity, new CollisionStats { TimeSinceLastCollision = 10f });
         dstManager.AddComponentData(entity, new ShaderCollisionTime { Value = 100f });
+        dstManager.AddComponentData(entity, new Atom());
     }
 }
