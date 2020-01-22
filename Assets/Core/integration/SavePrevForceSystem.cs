@@ -6,18 +6,11 @@ using Unity.Jobs;
 [UpdateAfter(typeof(UpdateVelocitySystem))]
 public class SavePrevForceSystem : JobComponentSystem
 {
-    [BurstCompile]
-    struct SavePrevForceJob : IJobForEach<Force, PrevForce>
-    {   
-        public void Execute(
-            [ReadOnly] ref Force force, ref PrevForce oldForce)
-        {
-            oldForce.Value = force.Value;
-        }
-    }
-    
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
-        return new SavePrevForceJob().Schedule(this, inputDependencies);
+        return Entities.ForEach(
+            (ref PrevForce prevForce, in Force force) =>
+                prevForce.Value = force.Value
+                ).Schedule(inputDependencies);
     }
 }

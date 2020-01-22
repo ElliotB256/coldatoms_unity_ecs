@@ -1,5 +1,4 @@
-﻿using Unity.Burst;
-using Unity.Collections;
+﻿using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Transforms;
@@ -10,20 +9,11 @@ using Unity.Transforms;
 [UpdateBefore(typeof(ForceCalculationSystems))]
 public class UpdateKnifeScaleSystem : JobComponentSystem
 {
-    [BurstCompile]
-    [RequireComponentTag(typeof(RFKnife))]
-    struct UpdateKnifeSizeJob : IJobForEach<Radius,Scale>
-    {
-        public void Execute(
-            [ReadOnly] ref Radius radius,
-            ref Scale scale)
-        {
-            scale.Value = radius.Value * 2f;
-        }
-    }
-
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
-        return new UpdateKnifeSizeJob().Schedule(this, inputDependencies);
+        return Entities.WithAll<RFKnife>().ForEach(
+            (ref Scale scale, in Radius radius) =>
+                scale.Value = radius.Value * 2f
+            ).Schedule(inputDependencies);
     }
 }

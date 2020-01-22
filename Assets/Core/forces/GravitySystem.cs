@@ -14,19 +14,12 @@ public class GravitySystem : JobComponentSystem
 
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
-        return new ApplyGravityJob { g = GRAVITATIONAL_CONSTANT * math.float3(0f, -1f, 0f) }.Schedule(this, inputDependencies);
-    }
-
-    [ExcludeComponent(typeof(Trapped))]
-    [BurstCompile]
-    struct ApplyGravityJob : IJobForEach<Mass, Force>
-    {
-        public float3 g;
-
-        public void Execute(
-            [ReadOnly] ref Mass mass, ref Force force)
-        {
-            force.Value = force.Value + mass.Value * g;
-        }
+        return Entities
+                .WithNone<Trapped>()
+                .ForEach(
+                    (ref Force force, in Mass mass)
+                        => force.Value = force.Value - mass.Value * GRAVITATIONAL_CONSTANT * math.float3(0f, 1f, 0f)
+                )
+                .Schedule(inputDependencies);
     }
 }
