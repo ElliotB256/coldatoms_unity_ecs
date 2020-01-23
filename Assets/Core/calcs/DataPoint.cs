@@ -12,3 +12,9 @@ public struct DataLength : IComponentData
 {
     public int Value;
 }
+
+public struct DataRange : IComponentData
+{
+    public float Min;
+    public float Max;
+}
