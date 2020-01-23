@@ -551,7 +551,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 116f4f91b63d6c14ca6a614a8ddd43f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SeriesLength: 10
+  Material: {fileID: 2100000, guid: b4c8a2b0b414f7143a47fe7965bc8649, type: 2}
+  SeriesLength: 1024
+  SamplingInterval: 0.1
 --- !u!4 &1325516426
 Transform:
   m_ObjectHideFlags: 0

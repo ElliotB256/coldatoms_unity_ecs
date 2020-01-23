@@ -10,6 +10,7 @@ namespace Calculation
     {
         public Material Material;
         public int SeriesLength = 100;
+        public float SamplingInterval = 0.1f;
 
         public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
         {
@@ -17,13 +18,17 @@ namespace Calculation
             dstManager.AddBuffer<DataPoint>(x);
             dstManager.AddComponentData(x, new TimeData());
             dstManager.AddComponentData(x, new DataLength { Value = SeriesLength });
-            dstManager.AddComponentData(x, new DataRange { Min = 0f, Max = 10f });
+            dstManager.AddComponentData(x, new AxisLimit { Min = 0f, Max = 1f });
+            dstManager.AddComponentData(x, new CurrentDataValue { Value = 0f });
+            dstManager.AddComponentData(x, new SamplingInterval { Interval = SamplingInterval });
 
             var y = dstManager.CreateEntity();
             dstManager.AddBuffer<DataPoint>(y);
             dstManager.AddComponentData(y, new TimeData());
             dstManager.AddComponentData(y, new DataLength { Value = SeriesLength });
-            dstManager.AddComponentData(y, new DataRange { Min = 0f, Max = 10f });
+            dstManager.AddComponentData(y, new AxisLimit { Min = 0f, Max = 1f });
+            dstManager.AddComponentData(y, new CurrentDataValue { Value = 0f });
+            dstManager.AddComponentData(y, new SamplingInterval { Interval = SamplingInterval });
 
             dstManager.AddComponentData(entity, new Graph
             {

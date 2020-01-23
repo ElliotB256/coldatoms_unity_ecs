@@ -11,9 +11,7 @@ namespace Calculation
             float time = (float)Time.ElapsedTime;
             return Entities
                 .WithAll<TimeData>()
-                .ForEach(
-                    (DynamicBuffer<DataPoint> data) => data.Add(new DataPoint { Value = time })
-                )
+                .ForEach((ref CurrentDataValue data) => data.Value = time)
                 .Schedule(inputDeps);
         }
     }

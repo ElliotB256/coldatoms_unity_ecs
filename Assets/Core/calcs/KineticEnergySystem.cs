@@ -37,9 +37,7 @@ namespace Calculation
             float time = (float)Time.ElapsedTime;
             return Entities
                 .WithAll<KineticEnergyData>()
-                .ForEach(
-                    (DynamicBuffer<DataPoint> data) => data.Add(new DataPoint { Value = TotalKE[0] })
-                )
+                .ForEach((CurrentDataValue data) => data.Value = TotalKE[0])
                 .WithDeallocateOnJobCompletion(TotalKE)
                 .Schedule(GetTotalKE);
         }
