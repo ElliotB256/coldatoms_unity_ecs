@@ -7,7 +7,7 @@ using Unity.Transforms;
 /// </summary>
 public class OutOfBoundsSystem : JobComponentSystem
 {
-    public const float OUT_OF_BOUNDS_LIMIT = 10f;
+    public const float OUT_OF_BOUNDS_LIMIT = 50f;
 
     EntityCommandBufferSystem CommandBufferSystem;
 
