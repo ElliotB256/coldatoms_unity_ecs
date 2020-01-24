@@ -12,21 +12,27 @@ namespace Calculation
         public int SeriesLength = 100;
         public float SamplingInterval = 0.1f;
 
+        public float YAxisMin = 0f;
+        public float YAxisMax = 1f;
+
+        public float XAxisMin = 0f;
+        public float XAxisMax = 1f;
+
         public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
         {
             var x = dstManager.CreateEntity();
             dstManager.AddBuffer<DataPoint>(x);
             dstManager.AddComponentData(x, new TimeData());
             dstManager.AddComponentData(x, new DataLength { Value = SeriesLength });
-            dstManager.AddComponentData(x, new AxisLimit { Min = 0f, Max = 1f });
+            dstManager.AddComponentData(x, new AxisLimit { Min = XAxisMin, Max = XAxisMax });
             dstManager.AddComponentData(x, new CurrentDataValue { Value = 0f });
             dstManager.AddComponentData(x, new SamplingInterval { Interval = SamplingInterval });
 
             var y = dstManager.CreateEntity();
             dstManager.AddBuffer<DataPoint>(y);
-            dstManager.AddComponentData(y, new TimeData());
+            dstManager.AddComponentData(y, new AverageKineticEnergyData());
             dstManager.AddComponentData(y, new DataLength { Value = SeriesLength });
-            dstManager.AddComponentData(y, new AxisLimit { Min = 0f, Max = 1f });
+            dstManager.AddComponentData(y, new AxisLimit { Min = YAxisMin, Max = YAxisMax });
             dstManager.AddComponentData(y, new CurrentDataValue { Value = 0f });
             dstManager.AddComponentData(y, new SamplingInterval { Interval = SamplingInterval });
 

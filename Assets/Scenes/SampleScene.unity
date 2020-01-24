@@ -554,6 +554,10 @@ MonoBehaviour:
   Material: {fileID: 2100000, guid: b4c8a2b0b414f7143a47fe7965bc8649, type: 2}
   SeriesLength: 1024
   SamplingInterval: 0.1
+  YAxisMin: 0
+  YAxisMax: 3
+  XAxisMin: 0
+  XAxisMax: 3
 --- !u!4 &1325516426
 Transform:
   m_ObjectHideFlags: 0
@@ -562,8 +566,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1325516423}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: -30, y: 0, z: 0}
+  m_LocalScale: {x: 2, y: 2, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 6
