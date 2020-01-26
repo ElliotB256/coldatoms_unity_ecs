@@ -1,13 +1,19 @@
 ﻿using System;
 using Unity.Entities;
+using Calculation;
 
 /// <summary>
 /// Kinetic energy associated with an entity.
 /// </summary>
 [Serializable]
-public struct KineticEnergy : IComponentData
+public struct KineticEnergy : IComponentData, IAggregatable
 {
     public float Value;
+
+    public float GetValue()
+    {
+        return Value;
+    }
 }
 
 /// <summary>

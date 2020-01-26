@@ -30,7 +30,8 @@ namespace Calculation
 
             var y = dstManager.CreateEntity();
             dstManager.AddBuffer<DataPoint>(y);
-            dstManager.AddComponentData(y, new AverageKineticEnergyData());
+            dstManager.AddComponentData(y, new KineticEnergyData());
+            dstManager.AddComponentData(y, new Average());
             dstManager.AddComponentData(y, new DataLength { Value = SeriesLength });
             dstManager.AddComponentData(y, new AxisLimit { Min = YAxisMin, Max = YAxisMax });
             dstManager.AddComponentData(y, new CurrentDataValue { Value = 0f });

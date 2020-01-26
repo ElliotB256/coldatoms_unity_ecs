@@ -6,7 +6,7 @@ using Unity.Mathematics;
 namespace Calculation
 {
     [UpdateInGroup(typeof(CalculationSystemGroup))]
-    public class CalculateKineticEnergySystem : JobComponentSystem
+    public class CalculateAtomKineticEnergySystem : JobComponentSystem
     {
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
@@ -17,4 +17,12 @@ namespace Calculation
                 .Schedule(inputDeps);
         }
     }
+
+    public struct KineticEnergyData : IComponentData { }
+
+    [
+        UpdateInGroup(typeof(CalculationSystemGroup)),
+        UpdateAfter(typeof(CalculateAtomKineticEnergySystem))
+        ]
+    public class CalculateAggregateKineticEnergySystem : AggregateQuantitiesSystem<KineticEnergy, KineticEnergyData> { }
 }

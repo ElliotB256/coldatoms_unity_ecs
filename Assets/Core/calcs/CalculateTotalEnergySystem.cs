@@ -6,9 +6,9 @@ namespace Calculation
 {
     [
         UpdateInGroup(typeof(CalculationSystemGroup)),
-        UpdateAfter(typeof(CalculateKineticEnergySystem))
+        UpdateAfter(typeof(CalculateAtomKineticEnergySystem))
         ]
-    public class CalculateTotalEnergySystem : JobComponentSystem
+    public class CalculateAtomTotalEnergySystem : JobComponentSystem
     {
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
