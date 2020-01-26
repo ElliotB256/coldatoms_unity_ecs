@@ -21,7 +21,7 @@ namespace Calculation
 
             var Vertices = new NativeArray<float3>(MAX_GRAPH_POINTS * V_PER_SEGMENT, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             var UVs = new NativeArray<float4>(MAX_GRAPH_POINTS * V_PER_SEGMENT, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-            var Triangles = new NativeArray<int>(MAX_GRAPH_POINTS * 6, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+            var Triangles = new NativeArray<int>(MAX_GRAPH_POINTS * I_PER_SEGMENT, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
             inputDeps.Complete();
 

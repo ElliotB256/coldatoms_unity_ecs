@@ -24,11 +24,8 @@ namespace Calculation
         where TAQuantity : struct, IComponentData, IAggregatable
         where TMarker : struct, IComponentData
     {
-        private EntityQuery AtomQuery;
-
         protected override void OnCreateManager()
         {
-            Enabled = false;
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -37,7 +34,6 @@ namespace Calculation
             var minPerGroup = new NativeArray<float>(Group.NUMBER_OF_GROUPS, Allocator.TempJob, NativeArrayOptions.ClearMemory);
             var maxPerGroup = new NativeArray<float>(Group.NUMBER_OF_GROUPS, Allocator.TempJob, NativeArrayOptions.ClearMemory);
             var numberPerGroup = new NativeArray<int>(Group.NUMBER_OF_GROUPS, Allocator.TempJob, NativeArrayOptions.ClearMemory);
-            int atomNumber = AtomQuery.CalculateEntityCount();
 
             // Aggregate quantities
             var aggregate = new AggregateJob
@@ -70,10 +66,10 @@ namespace Calculation
             }
             .Schedule(this, updateMin);
 
-            var updateAverage = new UpdateCurrentValueJob<Average>()
+            var updateAverage = new WeightedUpdateCurrentValueJob<Average>()
             {
                 Values = totalPerGroup,
-                Scale = atomNumber
+                Numbers = numberPerGroup
             }
             .Schedule(this, updateTotal);
 
@@ -88,7 +84,7 @@ namespace Calculation
         }
 
         [BurstCompile]
-        [RequireComponentTag(typeof(Atom))]
+        [RequireComponentTag(typeof(Atom),typeof(Trapped))]
         struct AggregateJob : IJobForEach<TAQuantity>
         {
             public NativeArray<float> TotalPerGroup;
@@ -115,6 +111,19 @@ namespace Calculation
             public void Execute(ref CurrentDataValue current, [ReadOnly] ref TMarker marker, [ReadOnly] ref TStrategy strategy)
             {
                 current.Value = Values[0] / Scale;
+            }
+        }
+
+        [BurstCompile]
+        struct WeightedUpdateCurrentValueJob<TStrategy> : IJobForEach<CurrentDataValue, TMarker, TStrategy>
+            where TStrategy : struct, IComponentData
+        {
+            public NativeArray<float> Values;
+            public NativeArray<int> Numbers;
+
+            public void Execute(ref CurrentDataValue current, [ReadOnly] ref TMarker marker, [ReadOnly] ref TStrategy strategy)
+            {
+                current.Value = Values[0] / Numbers[0];
             }
         }
     }
