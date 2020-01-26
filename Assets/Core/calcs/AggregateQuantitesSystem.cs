@@ -1,4 +1,5 @@
-﻿using Unity.Collections;
+﻿using Unity.Burst;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -27,7 +28,6 @@ namespace Calculation
 
         protected override void OnCreateManager()
         {
-            base.OnCreateManager();
             Enabled = false;
         }
 
@@ -36,64 +36,85 @@ namespace Calculation
             var totalPerGroup = new NativeArray<float>(Group.NUMBER_OF_GROUPS, Allocator.TempJob, NativeArrayOptions.ClearMemory);
             var minPerGroup = new NativeArray<float>(Group.NUMBER_OF_GROUPS, Allocator.TempJob, NativeArrayOptions.ClearMemory);
             var maxPerGroup = new NativeArray<float>(Group.NUMBER_OF_GROUPS, Allocator.TempJob, NativeArrayOptions.ClearMemory);
+            var numberPerGroup = new NativeArray<int>(Group.NUMBER_OF_GROUPS, Allocator.TempJob, NativeArrayOptions.ClearMemory);
             int atomNumber = AtomQuery.CalculateEntityCount();
 
             // Aggregate quantities
-            var aggregate = Entities
-                .ForEach(
-                (in TAQuantity q) =>
-                {
-                    totalPerGroup[0] = totalPerGroup[0] + q.GetValue();
-                    minPerGroup[0] = math.min(minPerGroup[0], q.GetValue());
-                    maxPerGroup[0] = math.max(maxPerGroup[0], q.GetValue());
-                }
-                )
-                .Schedule(inputDeps);
+            var aggregate = new AggregateJob
+            {
+                TotalPerGroup = totalPerGroup,
+                MinPerGroup = minPerGroup,
+                MaxPerGroup = maxPerGroup,
+                NumberPerGroup = numberPerGroup
+            }
+            .ScheduleSingle(this, inputDeps);
 
-            var updateMax = Entities
-                .WithAll<TMarker, Max>()
-                .ForEach(
-                (ref CurrentDataValue current) => current.Value = maxPerGroup[0]
-                )
-                .Schedule(aggregate);
+            var updateMax = new UpdateCurrentValueJob<Max>()
+            {
+                Values = maxPerGroup,
+                Scale = 1.0f
+            }
+            .Schedule(this, aggregate);
 
-            var updateMin = Entities
-                .WithAll<TMarker, Min>()
-                .ForEach(
-                (ref CurrentDataValue current) => current.Value = minPerGroup[0]
-                )
-                .Schedule(updateMax);
+            var updateMin = new UpdateCurrentValueJob<Min>()
+            {
+                Values = minPerGroup,
+                Scale = 1.0f
+            }
+            .Schedule(this, updateMax);
 
-            var updateTotal = Entities
-                .WithAll<TMarker, Total>()
-                .ForEach(
-                (ref CurrentDataValue current) => current.Value = totalPerGroup[0]
-                )
-                .Schedule(updateMin);
+            var updateTotal = new UpdateCurrentValueJob<Total>()
+            {
+                Values = totalPerGroup,
+                Scale = 1.0f
+            }
+            .Schedule(this, updateMin);
 
-            var updateMean = Entities
-                .WithAll<TMarker, Total>()
-                .ForEach(
-                (ref CurrentDataValue current) => current.Value = totalPerGroup[0] / atomNumber
-                )
-                .Schedule(updateTotal);
+            var updateAverage = new UpdateCurrentValueJob<Average>()
+            {
+                Values = totalPerGroup,
+                Scale = atomNumber
+            }
+            .Schedule(this, updateTotal);
 
-            totalPerGroup.Dispose(updateTotal);
+            
             minPerGroup.Dispose(updateMin);
             maxPerGroup.Dispose(updateMax);
+            totalPerGroup.Dispose(updateAverage);
+            numberPerGroup.Dispose(updateAverage);
 
-            return updateMean;
+            return updateAverage;
 
         }
 
+        [BurstCompile]
+        [RequireComponentTag(typeof(Atom))]
+        struct AggregateJob : IJobForEach<TAQuantity>
+        {
+            public NativeArray<float> TotalPerGroup;
+            public NativeArray<float> MinPerGroup;
+            public NativeArray<float> MaxPerGroup;
+            public NativeArray<int> NumberPerGroup;
+
+            public void Execute(ref TAQuantity quantity)
+            {
+                TotalPerGroup[0] = TotalPerGroup[0] + quantity.GetValue();
+                MinPerGroup[0] = math.min(MinPerGroup[0], quantity.GetValue());
+                MaxPerGroup[0] = math.max(MaxPerGroup[0], quantity.GetValue());
+                NumberPerGroup[0] = NumberPerGroup[0] + 1;
+            }
+        }
+
+        [BurstCompile]
         struct UpdateCurrentValueJob<TStrategy> : IJobForEach<CurrentDataValue, TMarker, TStrategy>
             where TStrategy : struct, IComponentData
         {
             public NativeArray<float> Values;
+            public float Scale;
 
             public void Execute(ref CurrentDataValue current, [ReadOnly] ref TMarker marker, [ReadOnly] ref TStrategy strategy)
             {
-                current.Value = Values[0];
+                current.Value = Values[0] / Scale;
             }
         }
     }

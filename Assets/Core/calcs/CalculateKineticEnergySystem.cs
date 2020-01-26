@@ -22,7 +22,8 @@ namespace Calculation
 
     [
         UpdateInGroup(typeof(CalculationSystemGroup)),
-        UpdateAfter(typeof(CalculateAtomKineticEnergySystem))
+        UpdateAfter(typeof(CalculateAtomKineticEnergySystem)),
+        AlwaysUpdateSystem
         ]
     public class CalculateAggregateKineticEnergySystem : AggregateQuantitiesSystem<KineticEnergy, KineticEnergyData> { }
 }
