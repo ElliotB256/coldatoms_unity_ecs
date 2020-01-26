@@ -150,7 +150,7 @@ public class HardSphereCollisionSystem : JobComponentSystem
     /// <summary>
     /// Gets the ids of hashmap boxes that contain atoms.
     /// </summary>
-    [BurstCompile]
+    //[BurstCompile]
     struct GetFilledBoxIDs : IJob
     {
         [ReadOnly] public NativeMultiHashMap<int, int> BinnedAtoms;

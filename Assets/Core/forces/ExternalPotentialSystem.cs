@@ -5,21 +5,23 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 
-namespace Forces {
+namespace Forces
+{
 
-    public interface ICalculator<T>
+    public interface ICalculator<TPotential, TComp>
     {
-        float3 CalculateForce(in T potential, in LocalToWorld potentialLocation, in LocalToWorld atomLocation);
-        float CalculatePotential(in T potential, in LocalToWorld potentialLocation, in LocalToWorld atomLocation);
+        float3 CalculateForce(in TPotential potential, in LocalToWorld potentialLocation, in LocalToWorld atomLocation, in TComp atomComponent);
+        float CalculatePotential(in TPotential potential, in LocalToWorld potentialLocation, in LocalToWorld atomLocation, in TComp atomComponent);
     }
 
     /// <summary>
     /// Performs force and potential calculations for external force systems.
     /// </summary>
     [UpdateInGroup(typeof(ForceCalculationSystems))]
-    public abstract class ExternalPotentialSystem<TPotential, Calculator> : JobComponentSystem
+    public abstract class ExternalPotentialSystem<TPotential, TComponent, Calculator> : JobComponentSystem
         where TPotential : struct, IComponentData
-        where Calculator : struct, ICalculator<TPotential>
+        where TComponent : struct, IComponentData
+        where Calculator : struct, ICalculator<TPotential, TComponent>
     {
         /// <summary>
         /// Returns the Calculator used to calculate force and potential energy.
@@ -45,26 +47,17 @@ namespace Forces {
 
         protected override JobHandle OnUpdate(JobHandle inputDependencies)
         {
-            NativeArray<ExternalPotential> Potentials = new NativeArray<ExternalPotential>(
-                PotentialQuery.CalculateEntityCount(),
-                Allocator.TempJob,
-                NativeArrayOptions.UninitializedMemory
-                );
-
-            var getPotentials = Entities
-                .ForEach(
-                (int entityInQueryIndex, in LocalToWorld transform, in TPotential potential) =>
-                    Potentials[entityInQueryIndex] = new ExternalPotential { Potential = potential, Transform = transform }
-                )
-                .WithNativeDisableParallelForRestriction(Potentials)
-                .Schedule(inputDependencies);
+            NativeArray<TPotential> potentials = PotentialQuery.ToComponentDataArray<TPotential>(Allocator.TempJob);
+            NativeArray<LocalToWorld> potentialTransforms = PotentialQuery.ToComponentDataArray<LocalToWorld>(Allocator.TempJob);
 
             var applyPotentials = new ApplyPotentials
             {
-                Potentials = Potentials,
+                Potentials = potentials,
+                PotentialTransforms = potentialTransforms,
                 AtomTransforms = GetArchetypeChunkComponentType<LocalToWorld>(true),
-                AtomForces = GetArchetypeChunkComponentType<Force>(false)
-            }.Schedule(AtomQuery, getPotentials);
+                AtomComponent = GetArchetypeChunkComponentType<TComponent>(true),
+                AtomForces = GetArchetypeChunkComponentType<Force>(false),
+            }.Schedule(AtomQuery, inputDependencies);
 
             return applyPotentials;
         }
@@ -75,8 +68,10 @@ namespace Forces {
         [BurstCompile]
         struct ApplyPotentials : IJobChunk
         {
-            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<ExternalPotential> Potentials;
+            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<TPotential> Potentials;
+            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<LocalToWorld> PotentialTransforms;
             [ReadOnly] public ArchetypeChunkComponentType<LocalToWorld> AtomTransforms;
+            [ReadOnly] public ArchetypeChunkComponentType<TComponent> AtomComponent;
             public ArchetypeChunkComponentType<Force> AtomForces;
             public Calculator Calculator;
 
@@ -84,13 +79,14 @@ namespace Forces {
             {
                 var atomPos = chunk.GetNativeArray(AtomTransforms);
                 var atomForces = chunk.GetNativeArray(AtomForces);
+                var atomComponent = chunk.GetNativeArray(AtomComponent);
 
                 for (int atomId = 0; atomId < atomForces.Length; atomId++)
                 {
                     var force = atomForces[atomId];
                     for (int trapId = 0; trapId < Potentials.Length; trapId++)
                     {
-                        force.Value += Calculator.CalculateForce(Potentials[trapId].Potential, Potentials[trapId].Transform, atomPos[atomId]);
+                        force.Value += Calculator.CalculateForce(Potentials[trapId], PotentialTransforms[trapId], atomPos[atomId], atomComponent[atomId]);
                     }
                     atomForces[atomId] = force;
                 }
@@ -104,7 +100,8 @@ namespace Forces {
                 All = new[] {
                     ComponentType.ReadOnly<LocalToWorld>(),
                     ComponentType.ReadOnly<Force>(),
-                    ComponentType.ReadOnly<Trapped>()
+                    ComponentType.ReadOnly<Trapped>(),
+                    ComponentType.ReadOnly<TComponent>()
                 }
             }
             );
