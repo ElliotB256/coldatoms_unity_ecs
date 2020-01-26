@@ -3,7 +3,7 @@ using Unity.Jobs;
 
 namespace Calculation
 {
-    [UpdateInGroup(typeof(CalculationSystemGroup))]
+    [UpdateInGroup(typeof(PostCalculationGroup))]
     public class SampleDataSystem : JobComponentSystem
     {
         protected override JobHandle OnUpdate(JobHandle inputDeps)

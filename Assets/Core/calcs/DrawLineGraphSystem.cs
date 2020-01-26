@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Calculation
 {
-    [UpdateInGroup(typeof(CalculationSystemGroup))]
+    [UpdateInGroup(typeof(PostCalculationGroup))]
     public class DrawLineGraphSystem : JobComponentSystem
     {
         public const int MAX_GRAPH_POINTS = 1024;
