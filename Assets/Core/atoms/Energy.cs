@@ -20,13 +20,23 @@ public struct KineticEnergy : IComponentData, IAggregatable
 /// Potential Energy associated with an entity.
 /// </summary>
 [Serializable]
-public struct PotentialEnergy : IComponentData
+public struct PotentialEnergy : IComponentData, IAggregatable
 {
     public float Value;
+
+    public float GetValue()
+    {
+        return Value;
+    }
 }
 
 [Serializable]
-public struct TotalEnergy : IComponentData
+public struct TotalEnergy : IComponentData, IAggregatable
 {
     public float Value;
+
+    public float GetValue()
+    {
+        return Value;
+    }
 }

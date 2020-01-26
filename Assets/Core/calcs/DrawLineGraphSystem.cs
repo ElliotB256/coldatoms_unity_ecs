@@ -14,6 +14,11 @@ namespace Calculation
         public const int V_PER_SEGMENT = 8;
         public const int I_PER_SEGMENT = 6 * 3;
 
+        protected override void OnCreateManager()
+        {
+            //Enabled = false;
+        }
+
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
             var DataPoints = GetBufferFromEntity<DataPoint>(true);
@@ -106,12 +111,13 @@ namespace Calculation
                     renderMesh.mesh.bounds = new Bounds(Vector3.zero, new Vector3(100f, 100f, 100f));
                 }
                 )
-                .WithDeallocateOnJobCompletion(Vertices)
-                .WithDeallocateOnJobCompletion(UVs)
-                .WithDeallocateOnJobCompletion(Triangles)
                 .WithName("CreateGraphMesh")
                 .WithoutBurst()
                 .Run();
+
+            Vertices.Dispose();
+            UVs.Dispose();
+            Triangles.Dispose();
 
             return inputDeps;
         }

@@ -8,6 +8,15 @@ namespace Calculation
     [RequiresEntityConversion]
     public class ChartProxy : MonoBehaviour, IConvertGameObjectToEntity
     {
+        public enum eQuantity
+        {
+            KineticEnergy,
+            PotentialEnergy,
+            TotalEnergy
+        }
+
+        public eQuantity Quantity;
+
         public Material Material;
         public int SeriesLength = 100;
         public float SamplingInterval = 0.1f;
@@ -30,7 +39,19 @@ namespace Calculation
 
             var y = dstManager.CreateEntity();
             dstManager.AddBuffer<DataPoint>(y);
-            dstManager.AddComponentData(y, new KineticEnergyData());
+
+            switch (Quantity)
+            {
+                case eQuantity.KineticEnergy:
+                    dstManager.AddComponentData(y, new KineticEnergyData());
+                    break;
+                case eQuantity.PotentialEnergy:
+                    dstManager.AddComponentData(y, new PotentialEnergyData());
+                    break;
+                case eQuantity.TotalEnergy:
+                    dstManager.AddComponentData(y, new TotalEnergyData());
+                    break;
+            }
             dstManager.AddComponentData(y, new Average());
             dstManager.AddComponentData(y, new DataLength { Value = SeriesLength });
             dstManager.AddComponentData(y, new AxisLimit { Min = YAxisMin, Max = YAxisMax });

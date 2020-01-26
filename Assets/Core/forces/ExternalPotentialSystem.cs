@@ -57,6 +57,7 @@ namespace Forces
                 AtomTransforms = GetArchetypeChunkComponentType<LocalToWorld>(true),
                 AtomComponent = GetArchetypeChunkComponentType<TComponent>(true),
                 AtomForces = GetArchetypeChunkComponentType<Force>(false),
+                AtomPEs = GetArchetypeChunkComponentType<PotentialEnergy>(false),
             }.Schedule(AtomQuery, inputDependencies);
 
             return applyPotentials;
@@ -73,22 +74,27 @@ namespace Forces
             [ReadOnly] public ArchetypeChunkComponentType<LocalToWorld> AtomTransforms;
             [ReadOnly] public ArchetypeChunkComponentType<TComponent> AtomComponent;
             public ArchetypeChunkComponentType<Force> AtomForces;
+            public ArchetypeChunkComponentType<PotentialEnergy> AtomPEs;
             public Calculator Calculator;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
                 var atomPos = chunk.GetNativeArray(AtomTransforms);
                 var atomForces = chunk.GetNativeArray(AtomForces);
+                var atomPEs = chunk.GetNativeArray(AtomPEs);
                 var atomComponent = chunk.GetNativeArray(AtomComponent);
 
                 for (int atomId = 0; atomId < atomForces.Length; atomId++)
                 {
                     var force = atomForces[atomId];
+                    var pe = atomPEs[atomId];
                     for (int trapId = 0; trapId < Potentials.Length; trapId++)
                     {
                         force.Value += Calculator.CalculateForce(Potentials[trapId], PotentialTransforms[trapId], atomPos[atomId], atomComponent[atomId]);
+                        pe.Value += Calculator.CalculatePotential(Potentials[trapId], PotentialTransforms[trapId], atomPos[atomId], atomComponent[atomId]);
                     }
                     atomForces[atomId] = force;
+                    atomPEs[atomId] = pe;
                 }
             }
         }

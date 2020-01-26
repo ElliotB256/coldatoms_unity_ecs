@@ -73,7 +73,6 @@ namespace Calculation
             }
             .Schedule(this, updateTotal);
 
-            
             minPerGroup.Dispose(updateMin);
             maxPerGroup.Dispose(updateMax);
             totalPerGroup.Dispose(updateAverage);
