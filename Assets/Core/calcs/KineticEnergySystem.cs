@@ -10,6 +10,12 @@ namespace Calculation
     {
         private EntityQuery AtomQuery;
 
+        protected override void OnCreateManager()
+        {
+            base.OnCreateManager();
+            Enabled = false;
+        }
+
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
             int AtomNumber = AtomQuery.CalculateEntityCount();

@@ -158,15 +158,9 @@ public class HardSphereCollisionSystem : JobComponentSystem
 
         public void Execute()
         {
-            var keys = BinnedAtoms.GetKeyArray(Allocator.Temp);
-            //var (keys, length) = BinnedAtoms.GetUniqueKeyArray(Allocator.Temp);
-            //for (int i = 0; i < length; i++)
-            //  UniqueKeys.Add(keys[i]);
-            for (int i = 0; i < keys.Length; i++)
-            {
-                if (!UniqueKeys.Contains(keys[i]))
-                    UniqueKeys.Add(keys[i]);
-            }
+            var (keys, length) = BinnedAtoms.GetUniqueKeyArray(Allocator.Temp);
+            for (int i = 0; i < length; i++)
+              UniqueKeys.Add(keys[i]);
             keys.Dispose();
         }
     }
