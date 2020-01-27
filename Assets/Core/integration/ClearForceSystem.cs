@@ -1,7 +1,9 @@
-﻿using Unity.Collections;
+﻿using Integration;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 
+[UpdateInGroup(typeof(FixedUpdateGroup))]
 [UpdateBefore(typeof(ForceCalculationSystems))]
 public class ClearForceSystem : JobComponentSystem
 {

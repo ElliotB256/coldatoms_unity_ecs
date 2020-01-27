@@ -1,4 +1,5 @@
-﻿using Unity.Collections;
+﻿using Integration;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -8,6 +9,7 @@ using UnityEngine;
 /// <summary>
 /// Untrap atoms that are outside of RF knife sphere.
 /// </summary>
+[UpdateInGroup(typeof(FixedUpdateGroup))]
 [UpdateBefore(typeof(ForceCalculationSystems))]
 public class RFKnifeSystem : JobComponentSystem
 {

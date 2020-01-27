@@ -1,4 +1,5 @@
 ﻿using ECSUtil;
+using Integration;
 using System;
 using Unity.Burst;
 using Unity.Collections;
@@ -13,6 +14,7 @@ using Unity.Transforms;
 /// Uses a hard-sphere model, which collides two atoms if they overlap and are within the same spatial region.
 /// </summary>
 [UpdateBefore(typeof(ForceCalculationSystems))]
+[UpdateInGroup(typeof(FixedUpdateGroup))]
 public class HardSphereCollisionSystem : JobComponentSystem
 {
     /// <summary>

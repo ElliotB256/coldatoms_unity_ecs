@@ -1,9 +1,10 @@
-﻿using Unity.Burst;
+﻿using Integration;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 
 [UpdateAfter(typeof(UpdateVelocitySystem))]
+[UpdateInGroup(typeof(FixedUpdateGroup))]
 public class SavePrevForceSystem : JobComponentSystem
 {
     protected override JobHandle OnUpdate(JobHandle inputDependencies)

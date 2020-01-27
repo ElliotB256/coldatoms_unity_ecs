@@ -1,10 +1,12 @@
-﻿using Unity.Entities;
+﻿using Integration;
+using Unity.Entities;
 using Unity.Jobs;
 using Unity.Transforms;
 
 /// <summary>
 /// Deletes any atoms that leave the simulation bounds.
 /// </summary>
+[UpdateInGroup(typeof(FixedUpdateGroup))]
 public class OutOfBoundsSystem : JobComponentSystem
 {
     public const float OUT_OF_BOUNDS_LIMIT = 50f;
