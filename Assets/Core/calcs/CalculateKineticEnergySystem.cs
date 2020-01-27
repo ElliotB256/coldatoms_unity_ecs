@@ -17,28 +17,4 @@ namespace Calculation
                 .Schedule(inputDeps);
         }
     }
-
-    [
-        UpdateInGroup(typeof(CalculationSystemGroup)),
-        UpdateAfter(typeof(CalculateAtomKineticEnergySystem)),
-        AlwaysUpdateSystem
-        ]
-    public class CalculateAggregateKineticEnergySystem : AggregateQuantitiesSystem<KineticEnergy, KineticEnergyData> { }
-    public struct KineticEnergyData : IComponentData { }
-
-    [
-        UpdateInGroup(typeof(CalculationSystemGroup)),
-        UpdateAfter(typeof(CalculateAggregateKineticEnergySystem)),
-        AlwaysUpdateSystem
-        ]
-    public class CalculateAggregatePotentialEnergySystem : AggregateQuantitiesSystem<PotentialEnergy, PotentialEnergyData> { }
-    public struct PotentialEnergyData : IComponentData { }
-
-    [
-        UpdateInGroup(typeof(CalculationSystemGroup)),
-        UpdateAfter(typeof(CalculateAggregatePotentialEnergySystem)),
-        AlwaysUpdateSystem
-        ]
-    public class CalculateAggregateTotalEnergySystem : AggregateQuantitiesSystem<PotentialEnergy, TotalEnergyData> { }
-    public struct TotalEnergyData : IComponentData { }
 }
