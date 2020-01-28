@@ -13,7 +13,7 @@ using Unity.Transforms;
 /// 
 /// Uses a hard-sphere model, which collides two atoms if they overlap and are within the same spatial region.
 /// </summary>
-[UpdateBefore(typeof(ForceCalculationSystems))]
+[UpdateAfter(typeof(UpdateVelocitySystem))]
 [UpdateInGroup(typeof(FixedUpdateGroup))]
 public class HardSphereCollisionSystem : JobComponentSystem
 {
