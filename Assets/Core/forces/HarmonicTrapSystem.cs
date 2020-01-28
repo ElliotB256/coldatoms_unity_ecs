@@ -6,14 +6,14 @@ namespace Forces
 {
     public struct HarmonicTrapCalculator : ICalculator<HarmonicTrap, Mass>
     {
-        public float3 CalculateForce(in HarmonicTrap potential, in LocalToWorld potentialLocation, in LocalToWorld atomLocation, in Mass mass)
+        public float3 CalculateForce(in HarmonicTrap potential, in Translation potentialLocation, in Translation atomLocation, in Mass mass)
         {
-            return potential.SpringConstant * (potentialLocation.Position - atomLocation.Position);
+            return potential.SpringConstant * (potentialLocation.Value - atomLocation.Value);
         }
 
-        public float CalculatePotential(in HarmonicTrap potential, in LocalToWorld potentialLocation, in LocalToWorld atomLocation, in Mass mass)
+        public float CalculatePotential(in HarmonicTrap potential, in Translation potentialLocation, in Translation atomLocation, in Mass mass)
         {
-            return potential.SpringConstant * math.lengthsq(potentialLocation.Position - atomLocation.Position) / 2.0f;
+            return potential.SpringConstant * math.lengthsq(potentialLocation.Value - atomLocation.Value) / 2.0f;
         }
     }
 

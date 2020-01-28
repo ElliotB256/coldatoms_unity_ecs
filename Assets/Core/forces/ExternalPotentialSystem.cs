@@ -10,8 +10,8 @@ namespace Forces
 
     public interface ICalculator<TPotential, TComp>
     {
-        float3 CalculateForce(in TPotential potential, in LocalToWorld potentialLocation, in LocalToWorld atomLocation, in TComp atomComponent);
-        float CalculatePotential(in TPotential potential, in LocalToWorld potentialLocation, in LocalToWorld atomLocation, in TComp atomComponent);
+        float3 CalculateForce(in TPotential potential, in Translation potentialLocation, in Translation atomLocation, in TComp atomComponent);
+        float CalculatePotential(in TPotential potential, in Translation potentialLocation, in Translation atomLocation, in TComp atomComponent);
     }
 
     /// <summary>
@@ -48,13 +48,13 @@ namespace Forces
         protected override JobHandle OnUpdate(JobHandle inputDependencies)
         {
             NativeArray<TPotential> potentials = PotentialQuery.ToComponentDataArray<TPotential>(Allocator.TempJob);
-            NativeArray<LocalToWorld> potentialTransforms = PotentialQuery.ToComponentDataArray<LocalToWorld>(Allocator.TempJob);
+            NativeArray<Translation> potentialPos = PotentialQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
 
             var applyPotentials = new ApplyPotentials
             {
                 Potentials = potentials,
-                PotentialTransforms = potentialTransforms,
-                AtomTransforms = GetArchetypeChunkComponentType<LocalToWorld>(true),
+                PotentialPos = potentialPos,
+                AtomPos = GetArchetypeChunkComponentType<Translation>(true),
                 AtomComponent = GetArchetypeChunkComponentType<TComponent>(true),
                 AtomForces = GetArchetypeChunkComponentType<Force>(false),
                 AtomPEs = GetArchetypeChunkComponentType<PotentialEnergy>(false),
@@ -70,8 +70,8 @@ namespace Forces
         struct ApplyPotentials : IJobChunk
         {
             [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<TPotential> Potentials;
-            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<LocalToWorld> PotentialTransforms;
-            [ReadOnly] public ArchetypeChunkComponentType<LocalToWorld> AtomTransforms;
+            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<Translation> PotentialPos;
+            [ReadOnly] public ArchetypeChunkComponentType<Translation> AtomPos;
             [ReadOnly] public ArchetypeChunkComponentType<TComponent> AtomComponent;
             public ArchetypeChunkComponentType<Force> AtomForces;
             public ArchetypeChunkComponentType<PotentialEnergy> AtomPEs;
@@ -79,7 +79,7 @@ namespace Forces
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
-                var atomPos = chunk.GetNativeArray(AtomTransforms);
+                var atomPos = chunk.GetNativeArray(AtomPos);
                 var atomForces = chunk.GetNativeArray(AtomForces);
                 var atomPEs = chunk.GetNativeArray(AtomPEs);
                 var atomComponent = chunk.GetNativeArray(AtomComponent);
@@ -90,8 +90,8 @@ namespace Forces
                     var pe = atomPEs[atomId];
                     for (int trapId = 0; trapId < Potentials.Length; trapId++)
                     {
-                        force.Value += Calculator.CalculateForce(Potentials[trapId], PotentialTransforms[trapId], atomPos[atomId], atomComponent[atomId]);
-                        pe.Value += Calculator.CalculatePotential(Potentials[trapId], PotentialTransforms[trapId], atomPos[atomId], atomComponent[atomId]);
+                        force.Value += Calculator.CalculateForce(Potentials[trapId], PotentialPos[trapId], atomPos[atomId], atomComponent[atomId]);
+                        pe.Value += Calculator.CalculatePotential(Potentials[trapId], PotentialPos[trapId], atomPos[atomId], atomComponent[atomId]);
                     }
                     atomForces[atomId] = force;
                     atomPEs[atomId] = pe;
@@ -104,7 +104,7 @@ namespace Forces
             AtomQuery = GetEntityQuery(new EntityQueryDesc
             {
                 All = new[] {
-                    ComponentType.ReadOnly<LocalToWorld>(),
+                    ComponentType.ReadOnly<Translation>(),
                     ComponentType.ReadOnly<Force>(),
                     ComponentType.ReadOnly<Trapped>(),
                     ComponentType.ReadOnly<TComponent>()
@@ -115,7 +115,7 @@ namespace Forces
             PotentialQuery = GetEntityQuery(new EntityQueryDesc
             {
                 All = new[] {
-                    ComponentType.ReadOnly<LocalToWorld>(),
+                    ComponentType.ReadOnly<Translation>(),
                     ComponentType.ReadOnly<TPotential>()
                 }
             }
