@@ -36,11 +36,13 @@ public class HardSphereCollisionSystem : JobComponentSystem
 
         var sortAtoms = new SortAtomsJob {
             BinnedAtoms = BinnedAtoms.AsParallelWriter(),
+            BinIDs = BinIDs.AsParallelWriter(),
             CellSize = COLLISION_CELL_SIZE
         }.Schedule(AtomQuery, getAtomData);
 
         var getUniqueKeys = new GetFilledBoxIDs {
-            BinnedAtoms = BinnedAtoms,
+            //BinnedAtoms = BinnedAtoms,
+            BinIds = BinIDs,
             UniqueKeys = UniqueBinIds
         }.Schedule(sortAtoms);
 
@@ -66,6 +68,7 @@ public class HardSphereCollisionSystem : JobComponentSystem
         BinnedAtoms.Dispose(updates);
         UniqueBinIds.Dispose(updates);
         Collided.Dispose(updates);
+        BinIDs.Dispose(updates);
 
         return updates;
     }
@@ -79,6 +82,7 @@ public class HardSphereCollisionSystem : JobComponentSystem
         BinnedAtoms = new NativeMultiHashMap<int, int>(atomNumber, Allocator.TempJob);
         UniqueBinIds = new NativeList<int>(atomNumber, Allocator.TempJob);
         Collided = new NativeArray<bool>(atomNumber, Allocator.TempJob, NativeArrayOptions.ClearMemory);
+        BinIDs = new NativeHashMap<int, bool>(atomNumber, Allocator.TempJob);
     }
 
     protected override void OnCreateManager()
@@ -103,6 +107,7 @@ public class HardSphereCollisionSystem : JobComponentSystem
     NativeArray<Velocity> Velocities;
     NativeList<int> UniqueBinIds;
     NativeArray<bool> Collided;
+    NativeHashMap<int, bool> BinIDs;
 
     /// <summary>
     /// Spatial Hashmap of Atoms. Key: bin, Values: atomId
@@ -141,29 +146,29 @@ public class HardSphereCollisionSystem : JobComponentSystem
     {
         [ReadOnly] public float CellSize;
         public NativeMultiHashMap<int, int>.ParallelWriter BinnedAtoms;
+        public NativeHashMap<int, bool>.ParallelWriter BinIDs;
 
         public void Execute(Entity entity, int index, [ReadOnly] ref Translation position)
         {
             int hash = (int)math.hash(new int3(math.floor(position.Value / CellSize)));
             BinnedAtoms.Add(hash, index);
+            BinIDs.TryAdd(hash, true);
         }
     }
 
     /// <summary>
     /// Gets the ids of hashmap boxes that contain atoms.
     /// </summary>
-    //[BurstCompile]
+    [BurstCompile]
     struct GetFilledBoxIDs : IJob
     {
-        [ReadOnly] public NativeMultiHashMap<int, int> BinnedAtoms;
+        [ReadOnly] public NativeHashMap<int, bool> BinIds;
         public NativeList<int> UniqueKeys;
 
         public void Execute()
         {
-            var (keys, length) = BinnedAtoms.GetUniqueKeyArray(Allocator.Temp);
-            for (int i = 0; i < length; i++)
-              UniqueKeys.Add(keys[i]);
-            keys.Dispose();
+            var keys = BinIds.GetKeyArray(Allocator.Temp);
+            UniqueKeys.AddRange(keys);
         }
     }
 
