@@ -5,6 +5,7 @@ using Unity.Entities;
 using Unity.Jobs;
 
 [UpdateBefore(typeof(ForceCalculationSystems))]
+[UpdateInGroup(typeof(FixedUpdateGroup))]
 public class IncreaseCollisionTimerSystem : JobComponentSystem
 { 
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
