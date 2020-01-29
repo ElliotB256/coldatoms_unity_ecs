@@ -1,6 +1,4 @@
-﻿using ECSUtil;
-using Integration;
-using System;
+﻿using Integration;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -28,10 +26,10 @@ public class HardSphereCollisionSystem : JobComponentSystem
         InitialiseMemory(atomNumber);
 
         // Collect atom data
-        var masJob = new GetNativeArrayJob<Mass> { Array = Masses }.Schedule(AtomQuery, inputDeps);
-        var posJob = new GetNativeArrayJob<Translation> { Array = Translations }.Schedule(AtomQuery, inputDeps);
-        var radJob = new GetNativeArrayJob<CollisionRadius> { Array = Radii }.Schedule(AtomQuery, inputDeps);
-        var velJob = new GetNativeArrayJob<Velocity> { Array = Velocities }.Schedule(AtomQuery, inputDeps);
+        Masses = AtomQuery.ToComponentDataArray<Mass>(Allocator.TempJob, out var masJob);
+        Translations = AtomQuery.ToComponentDataArray<Translation>(Allocator.TempJob, out var posJob);
+        Radii = AtomQuery.ToComponentDataArray<CollisionRadius>(Allocator.TempJob, out var radJob);
+        Velocities = AtomQuery.ToComponentDataArray<Velocity>(Allocator.TempJob, out var velJob);
         var getAtomData = JobHandle.CombineDependencies(JobHandle.CombineDependencies(masJob, posJob, radJob), velJob);
 
         var sortAtoms = new SortAtomsJob {
@@ -75,10 +73,10 @@ public class HardSphereCollisionSystem : JobComponentSystem
 
     public void InitialiseMemory(int atomNumber)
     {
-        Translations = new NativeArray<Translation>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        Masses = new NativeArray<Mass>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        Radii = new NativeArray<CollisionRadius>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        Velocities = new NativeArray<Velocity>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        //Translations = new NativeArray<Translation>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        //Masses = new NativeArray<Mass>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        //Radii = new NativeArray<CollisionRadius>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        //Velocities = new NativeArray<Velocity>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         BinnedAtoms = new NativeMultiHashMap<int, int>(atomNumber, Allocator.TempJob);
         UniqueBinIds = new NativeList<int>(atomNumber, Allocator.TempJob);
         Collided = new NativeArray<bool>(atomNumber, Allocator.TempJob, NativeArrayOptions.ClearMemory);
