@@ -30,6 +30,7 @@ namespace Calculation
                 All = new[] {
                     ComponentType.ReadOnly<Atom>(),
                     ComponentType.ReadOnly<TComponent>(),
+                    ComponentType.ReadOnly<Trapped>(),
                 }
             });
         }
