@@ -1,5 +1,6 @@
 ﻿using Integration;
 using System;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -37,6 +38,7 @@ public class UpdatePositionWithWallSystem : JobComponentSystem
         }.Schedule(this, inputDependencies);
     }
 
+    [BurstCompile]
     [RequireComponentTag(typeof(Atom))]
     struct UpdatePositionWithWallJob : IJobForEachWithEntity<Translation, Velocity, Mass, PrevForce>
     {
