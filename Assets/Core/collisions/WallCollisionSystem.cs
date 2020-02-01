@@ -84,7 +84,7 @@ public class UpdatePositionWithWallSystem : JobComponentSystem
                     direction = math.normalize(direction - 2 * math.dot(direction, normal) * normal);
 
                     //move atom away from wall
-                    translation.Value += 1.0e-6f * direction;
+                    translation.Value += 1.0e-4f * normal * math.dot(direction, normal);
                 }
                 else
                 {
