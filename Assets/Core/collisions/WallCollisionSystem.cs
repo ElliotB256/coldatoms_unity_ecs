@@ -56,33 +56,37 @@ public class UpdatePositionWithWallSystem : JobComponentSystem
             // Take wall that is nearest, collide off it
             // Repeat until no collisions.
             var delta = velocity.Value * dT + 0.5f * (force.Value / mass.Value) * dT * dT;
-            var direction = math.normalize(delta);
             var remaining = math.length(delta);
+            var direction = delta / remaining;
 
             while (remaining > 0f)
             {
-                // Select wall to collide with
+                // Find nearest wall
                 var distance = float.PositiveInfinity;
                 var wallIndex = 0;
                 for (int i = 0; i < Walls.Length; i++)
                 {
                     var newDistance = GetDistance(ref translation, ref direction, Walls[i]);
-                    if (newDistance > 0f && newDistance < distance)
+                    if (newDistance < distance && newDistance > 0f)
                     {
                         distance = newDistance;
                         wallIndex = i;
                     }
                 }
 
-                if (distance < remaining)
+                if (distance <= remaining)
                 {
-                    translation.Value = translation.Value + distance * direction;
+                    // Collision occurs - move atom to the wall, change direction.
+                    translation.Value += distance * direction;
                     remaining = remaining - distance;
                     
                     var normal = Walls[wallIndex].Normal;
                     direction = math.normalize(direction - 2 * math.dot(direction, normal) * normal);
+
+                    //move atom away from wall
                     translation.Value += 1.0e-6f * direction;
-                } else
+                }
+                else
                 {
                     translation.Value = translation.Value + direction * remaining;
                     remaining = 0f;
@@ -99,8 +103,9 @@ public class UpdatePositionWithWallSystem : JobComponentSystem
         float GetDistance(ref Translation translation, ref float3 direction, InfinitePlane wall)
         {
             float dot1 = math.dot(direction, wall.Normal);
-            //if (dot1 == 0) return float.PositiveInfinity;
-            float distance = math.dot(wall.V1 - translation.Value, wall.Normal) / dot1;
+            float dot2 = math.dot(wall.V1 - translation.Value, wall.Normal);
+            if (dot1 == 0) return float.PositiveInfinity;
+            float distance = dot2 / dot1;
             return distance;
         }
     }
