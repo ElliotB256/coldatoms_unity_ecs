@@ -11,6 +11,11 @@ using Unity.Transforms;
 [UpdateInGroup(typeof(FixedUpdateGroup))]
 public class UpdatePositionSystem : JobComponentSystem
 {
+    protected override void OnCreateManager()
+    {
+        Enabled = false;
+    }
+
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
         float DeltaTime = FixedUpdateGroup.FIXED_TIME_DELTA;
