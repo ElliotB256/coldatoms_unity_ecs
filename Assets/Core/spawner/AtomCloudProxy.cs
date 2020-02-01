@@ -17,6 +17,10 @@ public class AtomCloudProxy : MonoBehaviour, IConvertGameObjectToEntity, IDeclar
     [Tooltip("Velocity scale of spawned atoms.")]
     public float SpawnVelocities = 1f;
 
+    public Vector3 CentreOfMassVelocity;
+
+    public bool UseThreeDimensions = true;
+
     public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
         var prefab = conversionSystem.GetPrimaryEntity(Archetype);
@@ -25,7 +29,9 @@ public class AtomCloudProxy : MonoBehaviour, IConvertGameObjectToEntity, IDeclar
             Atom = prefab,
             Radius = Radius,
             Number = Number,
-            SpawnVelocities = SpawnVelocities
+            SpawnVelocities = SpawnVelocities,
+            COMVelocity = CentreOfMassVelocity,
+            ThreeDimensions = UseThreeDimensions
         };
         dstManager.AddComponentData(entity, atomCloud);
     }

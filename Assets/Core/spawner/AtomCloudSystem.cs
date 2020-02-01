@@ -34,10 +34,11 @@ public class AtomCloudSystem : JobComponentSystem
                 var theta = Random.NextFloat(0f, 1f) * math.PI;
                 var phi = Random.NextFloat(0f, 1f) * 2 * math.PI;
                 var r = Random.NextFloat(0f, cloud.Radius);
+                var zScale = cloud.ThreeDimensions ? 1.0f : 0.0f;
                 var position = new float3(
                     r * math.sin(theta) * math.cos(phi),
                     r * math.sin(theta) * math.sin(phi),
-                    r * math.cos(theta)
+                    zScale*r * math.cos(theta)
                     );
                 CommandBuffer.SetComponent(index, instance, new Translation { Value = position + location.Position });
 
@@ -45,8 +46,8 @@ public class AtomCloudSystem : JobComponentSystem
                 var velocity = new float3(
                     Random.NextFloat(-1f, 1f),
                     Random.NextFloat(-1f, 1f),
-                    Random.NextFloat(-1f, 1f)
-                ) * cloud.SpawnVelocities;
+                    zScale*Random.NextFloat(-1f, 1f)
+                ) * cloud.SpawnVelocities + cloud.COMVelocity;
                 CommandBuffer.SetComponent(index, instance, new Velocity { Value = velocity });
                 
             }
