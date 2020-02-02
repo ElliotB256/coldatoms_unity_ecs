@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 236813164195317973}
   - component: {fileID: -2854285992605086186}
   m_Layer: 0
-  m_Name: atom
+  m_Name: SmallSigmaAtom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -61,7 +61,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Mass: 0.2
-  ScatteringRadius: 0.5
+  ScatteringRadius: 0.1
 --- !u!33 &236813164195317978
 MeshFilter:
   m_ObjectHideFlags: 0

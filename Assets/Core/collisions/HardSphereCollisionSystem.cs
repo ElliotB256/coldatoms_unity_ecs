@@ -225,18 +225,23 @@ public class HardSphereCollisionSystem : JobComponentSystem
         public void TryCollide(int a, int b)
         {
             // Velocity in center of mass frame
-            float3 comv = (Velocities[a].Value + Velocities[b].Value) / 2f;
+            float3 vel1 = Velocities[a].Value;
+            float3 vel2 = Velocities[b].Value;
+            float mass1 = Masses[a].Value;
+            float mass2 = Masses[b].Value;
+
+            float3 comv = (mass1 * vel1 + mass2 * vel2) / (mass1 + mass2);
 
             //transform velocities to CoM frame
-            float3 vel1 = Velocities[a].Value - comv;
-            float3 vel2 = Velocities[b].Value - comv;
+            vel1 -= comv;
+            vel2 -= comv;
 
             //Only swap if velocities are facing each other in com frame
             if (math.dot(vel1, vel2) < 0f)
             {
-                // swap velocities in CoM frame
-                Velocities[a] = new Velocity { Value = comv + vel2 };
-                Velocities[b] = new Velocity { Value = comv + vel1 };
+                // swap momenta in CoM frame
+                Velocities[a] = new Velocity { Value = comv + vel2 * mass2 / mass1 };
+                Velocities[b] = new Velocity { Value = comv + vel1 * mass1 / mass2 };
 
                 Collided[a] = true;
                 Collided[b] = true;

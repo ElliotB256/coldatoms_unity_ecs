@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 236813164195317973}
   - component: {fileID: -2854285992605086186}
   m_Layer: 0
-  m_Name: atom
+  m_Name: atom_red
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -60,8 +60,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c41f98b6d424104e8b457220006083d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Mass: 0.2
-  ScatteringRadius: 0.5
+  Mass: 0.3
+  ScatteringRadius: 0.1
 --- !u!33 &236813164195317978
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -88,7 +88,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 68d76a2d0f20ba5478818b376570c305, type: 2}
+  - {fileID: 2100000, guid: 73ad60b798e988a4f9f84373c293feac, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

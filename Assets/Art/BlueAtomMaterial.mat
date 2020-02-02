@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: AtomMaterial
+  m_Name: BlueAtomMaterial
   m_Shader: {fileID: -6465566751694194690, guid: a67f25d7e2faf604ba4d903e8a24c6ec,
     type: 3}
   m_ShaderKeywords: 
@@ -159,7 +159,7 @@ Material:
     - _BlendMode: 0
     - _BumpScale: 1
     - _CoatMask: 0
-    - _CollTime: 0
+    - _CollTime: 1
     - _CullMode: 2
     - _CullModeForward: 2
     - _Cutoff: 0.5
@@ -277,7 +277,7 @@ Material:
     - _ZTestTransparent: 4
     - _ZWrite: 1
     m_Colors:
-    - Vector4_B3B81F98: {r: 1, g: 1, b: 1, a: 0}
+    - Vector4_B3B81F98: {r: 0, g: 0.1, b: 0.9, a: 0}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _BaseColorMap_MipInfo: {r: 0, g: 0, b: 0, a: 0}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
@@ -294,7 +294,7 @@ Material:
     - _UVDetailsMappingMask: {r: 1, g: 0, b: 0, a: 0}
     - _UVMappingMask: {r: 1, g: 0, b: 0, a: 0}
     - _UVMappingMaskEmissive: {r: 1, g: 0, b: 0, a: 0}
-    - colorCollide: {r: 0.2, g: 0, b: 0, a: 0}
+    - colorCollide: {r: 0, g: 0.1, b: 0.9, a: 0}
 --- !u!114 &234692407261304483
 MonoBehaviour:
   m_ObjectHideFlags: 11
