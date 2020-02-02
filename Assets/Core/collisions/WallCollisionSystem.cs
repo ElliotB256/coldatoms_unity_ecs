@@ -53,11 +53,20 @@ public class UpdatePositionWithWallSystem : JobComponentSystem
             [ReadOnly] ref Mass mass,
             [ReadOnly] ref PrevForce force)
         {
+            var delta = velocity.Value * dT + 0.5f * (force.Value / mass.Value) * dT * dT;
+
+            if (Walls.Length == 0)
+            {
+                translation.Value = translation.Value + delta;
+                return;
+
+            }
+
             // Normalise delta
             // Test for collision against all walls
             // Take wall that is nearest, collide off it
             // Repeat until no collisions.
-            var delta = velocity.Value * dT + 0.5f * (force.Value / mass.Value) * dT * dT;
+            
             var remaining = math.length(delta);
             var direction = delta / remaining;
 

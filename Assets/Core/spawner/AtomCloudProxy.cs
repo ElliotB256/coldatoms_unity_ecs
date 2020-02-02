@@ -31,7 +31,8 @@ public class AtomCloudProxy : MonoBehaviour, IConvertGameObjectToEntity, IDeclar
             Number = Number,
             SpawnVelocities = SpawnVelocities,
             COMVelocity = CentreOfMassVelocity,
-            ThreeDimensions = UseThreeDimensions
+            ThreeDimensions = UseThreeDimensions,
+            ShouldSpawn = true
         };
         dstManager.AddComponentData(entity, atomCloud);
     }

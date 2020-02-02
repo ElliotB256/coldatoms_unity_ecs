@@ -1,5 +1,4 @@
 ﻿using Unity.Entities;
-using Unity.Mathematics;
 
 namespace Integration
 {
@@ -10,8 +9,13 @@ namespace Integration
 
         private float _TimeSinceLastUpdate = 0f;
 
+        public bool IsPaused { get; set; }
+
         protected override void OnUpdate()
         {
+            if (IsPaused)
+                return;
+
             _TimeSinceLastUpdate += Time.DeltaTime;
             if (_TimeSinceLastUpdate > FIXED_TIME_DELTA)
             {

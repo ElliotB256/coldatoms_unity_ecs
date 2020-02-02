@@ -26,6 +26,9 @@ public class AtomCloudSystem : JobComponentSystem
         public void Execute(Entity entity, int index, [ReadOnly] ref AtomCloud cloud,
             [ReadOnly] ref LocalToWorld location)
         {
+            if (!cloud.ShouldSpawn)
+                return;
+
             for (int i = 0; i < cloud.Number; i++)
             {
                 var instance = CommandBuffer.Instantiate(index, cloud.Atom);
@@ -52,7 +55,7 @@ public class AtomCloudSystem : JobComponentSystem
                 
             }
 
-            CommandBuffer.DestroyEntity(index, entity);
+            cloud.ShouldSpawn = false;
         }
     }
 

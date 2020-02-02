@@ -12,4 +12,5 @@ public struct AtomCloud : IComponentData
     public float SpawnVelocities;
     public float3 COMVelocity;
     public bool ThreeDimensions;
+    public bool ShouldSpawn;
 }
