@@ -53,13 +53,10 @@ public class HardSphereCollisionSystem : JobComponentSystem
             Velocities = Velocities,
             Collided = Collided
         }.Schedule(atomNumber, 1, getUniqueKeys);
-        
-        //Just added this top line 
-        //
-        var updateAtomTranslations = new UpdateAtomTranslationsJob { AtomTranslations = Translations }.Schedule(AtomQuery, collisions);
+
         var updateAtomVelocities = new UpdateAtomVelocitiesJob { AtomVelocities = Velocities }.Schedule(AtomQuery, collisions);
         var updateCollisionStats = new UpdateCollisionStatsJob { Collided = Collided }.Schedule(AtomQuery, collisions);
-        var updates = JobHandle.CombineDependencies(updateAtomTranslations, updateAtomVelocities, updateCollisionStats);
+        var updates = JobHandle.CombineDependencies(updateAtomVelocities, updateCollisionStats);
 
         // Dispose all quantities once the job is complete.
         Translations.Dispose(updates);
@@ -76,7 +73,7 @@ public class HardSphereCollisionSystem : JobComponentSystem
 
     public void InitialiseMemory(int atomNumber)
     {
-        // Translations = new NativeArray<Translation>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        //Translations = new NativeArray<Translation>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         //Masses = new NativeArray<Mass>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         //Radii = new NativeArray<CollisionRadius>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         //Velocities = new NativeArray<Velocity>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
@@ -91,9 +88,9 @@ public class HardSphereCollisionSystem : JobComponentSystem
         AtomQuery = GetEntityQuery(new EntityQueryDesc
         {
             All = new[] {
+                    ComponentType.ReadOnly<Translation>(),
                     ComponentType.ReadOnly<CollisionRadius>(),
                     ComponentType.ReadOnly<Mass>(),
-                    ComponentType.ReadWrite<Translation>(),
                     ComponentType.ReadWrite<Velocity>(),
                     ComponentType.ReadWrite<Trapped>(),
                     ComponentType.ReadWrite<CollisionStats>()
@@ -178,9 +175,9 @@ public class HardSphereCollisionSystem : JobComponentSystem
     {
         [NativeDisableParallelForRestriction] [ReadOnly] public NativeList<int> BinIDs;
         [NativeDisableParallelForRestriction] [ReadOnly] public NativeMultiHashMap<int, int> BinnedAtoms;
+        [NativeDisableParallelForRestriction] [ReadOnly] public NativeArray<Translation> Translations;
         [NativeDisableParallelForRestriction] [ReadOnly] public NativeArray<Mass> Masses;
         [NativeDisableParallelForRestriction] [ReadOnly] public NativeArray<CollisionRadius> Radii;
-        [NativeDisableParallelForRestriction] public NativeArray<Translation> Translations; // Changed this from Readonly
         [NativeDisableParallelForRestriction] public NativeArray<Velocity> Velocities;
         [NativeDisableParallelForRestriction] public NativeArray<bool> Collided;
 
@@ -220,16 +217,6 @@ public class HardSphereCollisionSystem : JobComponentSystem
             return distance2 < size2;
         }
 
-
-        // Function to find the float overlap distnace between two collided atoms
-        // Only called when the atoms have been said to be colliding
-        public float OverlapDist(ref int a, ref int b)
-        {
-            float distance = math.length(Translations[a].Value - Translations[b].Value);
-            float size = Radii[a].Value + Radii[b].Value;
-            return size - distance;
-        }
-
         /// <summary>
         /// Ellastically collides two atoms.
         /// </summary>
@@ -237,10 +224,10 @@ public class HardSphereCollisionSystem : JobComponentSystem
         /// <param name="b">index of second atom</param>
         public void TryCollide(int a, int b)
         {
-
             // Velocity in center of mass frame
             float3 vel1 = Velocities[a].Value;
             float3 vel2 = Velocities[b].Value;
+            
             float mass1 = Masses[a].Value;
             float mass2 = Masses[b].Value;
 
@@ -254,41 +241,23 @@ public class HardSphereCollisionSystem : JobComponentSystem
             if (math.dot(vel1, vel2) < 0f)
             {
 
-                float overlappedDist = OverlapDist(ref a, ref b);
+                float3 relativeSeparation = Translations[b].Value - Translations[a].Value;
+                float relativeSeparationMagSq = math.lengthsq(relativeSeparation);
 
-                // Define new velocities of the particles, use later in the displacement 
-                float3 finalVela = comv + vel2 * mass2 / mass1;
-                float3 finalVelb = comv + vel1 * mass1 / mass2;       
-                
-                
-                // swap momenta in CoM frame
-                Velocities[a] = new Velocity { Value = finalVela };
-                Velocities[b] = new Velocity { Value = finalVelb };
+                // The positions of the particles only need to be proportional to this relativeSeparation as we only care about the sign.
+                // Only if both particles have negative dot product 
+                if (math.dot(vel1, relativeSeparation) > 0f & math.dot(vel2, relativeSeparation) < 0f)
+                {
+                    // swap momenta in CoM frame
+                    Velocities[a] = new Velocity { Value = comv + vel1 - (2/relativeSeparationMagSq)*math.dot(vel1, relativeSeparation)*relativeSeparation };
+                    Velocities[b] = new Velocity { Value = comv + vel2 - (2/relativeSeparationMagSq)*math.dot(vel2, relativeSeparation)*relativeSeparation };
+                    // Velocities[a] = new Velocity { Value = comv + vel2 * mass2 / mass1 };
+                    // Velocities[b] = new Velocity { Value = comv + vel1 * mass1 / mass2 };
 
-                // Now add a translation to each particle
-                // Move each particle along its new path just outside the radius of the other 
-                float3 movea = 0.5f*overlappedDist*math.normalize(finalVela);
-                float3 moveb = 0.5f*overlappedDist*math.normalize(finalVelb);
-
-                Translations[a] = new Translation { Value = Translations[a].Value + movea};
-                Translations[b] = new Translation { Value = Translations[b].Value + moveb};
-
-               
-                Collided[a] = true;
-                Collided[b] = true;
+                    Collided[a] = true;
+                    Collided[b] = true;
+                }
             }
-        }
-    }
-
-    // Added this function
-    [BurstCompile]
-    struct UpdateAtomTranslationsJob : IJobForEachWithEntity<Translation>
-    {
-        public NativeArray<Translation> AtomTranslations;
-
-        public void Execute(Entity entity, int index, ref Translation translation)
-        {
-            translation = AtomTranslations[index];
         }
     }
 
@@ -302,8 +271,6 @@ public class HardSphereCollisionSystem : JobComponentSystem
             velocity = AtomVelocities[index];
         }
     }
-
-
 
     [BurstCompile]
     struct UpdateCollisionStatsJob : IJobForEachWithEntity<CollisionStats>
