@@ -48,7 +48,7 @@ public class MonteCarloCollisionSystem : JobComponentSystem
         Collided = new NativeArray<bool>(atomNumber, Allocator.TempJob, NativeArrayOptions.ClearMemory);
     }
 
-    protected override void OnCreateManager()
+    protected override void OnCreate()
     {
         Enabled = false;
         AtomQuery = GetEntityQuery(new EntityQueryDesc
@@ -91,7 +91,7 @@ public class MonteCarloCollisionSystem : JobComponentSystem
         }
     }
 
-    protected override void OnDestroyManager()
+    protected override void OnDestroy()
     {
         Cleanup();
     }
