@@ -98,7 +98,7 @@ public class DoubleWellTrapSystem : JobComponentSystem
         }
     }
 
-    protected override void OnCreateManager()
+    protected override void OnCreate()
     {
         TrappedAtomQuery = GetEntityQuery(new EntityQueryDesc
         {
