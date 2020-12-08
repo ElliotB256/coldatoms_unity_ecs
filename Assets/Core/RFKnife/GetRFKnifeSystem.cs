@@ -29,7 +29,7 @@ public class GetRFKnifeSystem : ComponentSystem
 
     private EntityQuery RFKnives;
 
-    protected override void OnCreateManager()
+    protected override void OnCreate()
     {
         RFKnives = GetEntityQuery(new EntityQueryDesc
         {
