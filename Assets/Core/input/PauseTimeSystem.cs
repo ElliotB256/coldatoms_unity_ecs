@@ -8,7 +8,7 @@ public class PauseTimeSystem : ComponentSystem
     private bool _lastInputState = false;
     FixedUpdateGroup _SystemGroup = null;
 
-    protected override void OnCreateManager()
+    protected override void OnCreate()
     {
         _SystemGroup = World.GetOrCreateSystem<FixedUpdateGroup>();
     }
