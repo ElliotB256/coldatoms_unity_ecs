@@ -24,7 +24,7 @@ namespace Calculation
         where TAQuantity : struct, IComponentData, IAggregatable
         where TMarker : struct, IComponentData
     {
-        protected override void OnCreateManager()
+        protected override void OnCreate()
         {
         }
 
