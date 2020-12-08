@@ -14,7 +14,7 @@ namespace Calculation
         EntityQuery HistogramQuery;
         EntityQuery AtomQuery;
 
-        protected override void OnCreateManager()
+        protected override void OnCreate()
         {
             HistogramQuery = GetEntityQuery(new EntityQueryDesc
             {
