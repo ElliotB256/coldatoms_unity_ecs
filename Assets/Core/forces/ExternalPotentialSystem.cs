@@ -99,7 +99,7 @@ namespace Forces
             }
         }
 
-        protected override void OnCreateManager()
+        protected override void OnCreate()
         {
             AtomQuery = GetEntityQuery(new EntityQueryDesc
             {
