@@ -17,7 +17,7 @@ public class UpdatePositionWithWallSystem : JobComponentSystem
 {
     EntityQuery WallQuery;
 
-    protected override void OnCreateManager()
+    protected override void OnCreate()
     {
         WallQuery = GetEntityQuery(new EntityQueryDesc
         {
@@ -95,6 +95,7 @@ public class UpdatePositionWithWallSystem : JobComponentSystem
                     direction = math.normalize(direction - 2 * math.dot(direction, normal) * normal);
 
                     //move atom away from wall
+                        // I think this is causing some leaks, very low number so may not be worth fixing 
                     translation.Value += 1.0e-4f * normal * math.dot(direction, normal);
                 }
                 else
