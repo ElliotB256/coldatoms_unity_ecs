@@ -11,7 +11,7 @@ using Unity.Transforms;
 [UpdateInGroup(typeof(FixedUpdateGroup))]
 public class UpdatePositionSystem : JobComponentSystem
 {
-    protected override void OnCreateManager()
+    protected override void OnCreate()
     {
         Enabled = false;
     }
