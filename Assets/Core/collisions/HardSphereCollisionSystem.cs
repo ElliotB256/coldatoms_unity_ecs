@@ -24,7 +24,10 @@ public class HardSphereCollisionSystem : JobComponentSystem
     {
         int atomNumber = AtomQuery.CalculateEntityCount();
         InitialiseMemory(atomNumber);
-
+        
+        // ToComponentDataArray has been removed in newer version 
+        // Replace with GetComponentDataFromEntity?
+        
         // Collect atom data
         Masses = AtomQuery.ToComponentDataArray<Mass>(Allocator.TempJob, out var masJob);
         Translations = AtomQuery.ToComponentDataArray<Translation>(Allocator.TempJob, out var posJob);
@@ -73,17 +76,17 @@ public class HardSphereCollisionSystem : JobComponentSystem
 
     public void InitialiseMemory(int atomNumber)
     {
-        //Translations = new NativeArray<Translation>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        //Masses = new NativeArray<Mass>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        //Radii = new NativeArray<CollisionRadius>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        //Velocities = new NativeArray<Velocity>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        // Translations = new NativeArray<Translation>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        // Masses = new NativeArray<Mass>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        // Radii = new NativeArray<CollisionRadius>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        // Velocities = new NativeArray<Velocity>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         BinnedAtoms = new NativeMultiHashMap<int, int>(atomNumber, Allocator.TempJob);
         UniqueBinIds = new NativeList<int>(atomNumber, Allocator.TempJob);
         Collided = new NativeArray<bool>(atomNumber, Allocator.TempJob, NativeArrayOptions.ClearMemory);
         BinIDs = new NativeHashMap<int, bool>(atomNumber, Allocator.TempJob);
     }
 
-    protected override void OnCreateManager()
+    protected override void OnCreate()
     {
         AtomQuery = GetEntityQuery(new EntityQueryDesc
         {
@@ -112,29 +115,30 @@ public class HardSphereCollisionSystem : JobComponentSystem
     /// </summary>
     NativeMultiHashMap<int, int> BinnedAtoms;
 
-    /// <summary>
-    /// Gets atom quantities used for the collisions.
-    /// </summary>
-    [BurstCompile]
-    struct GetAtomsJob : IJobForEachWithEntity<Translation, CollisionRadius, Mass, Velocity>
-    {
-        public NativeArray<Translation> Translations;
-        public NativeArray<Mass> Masses;
-        public NativeArray<CollisionRadius> Radii;
-        public NativeArray<Velocity> Velocities;
+    //                                          I think this is redundant 
+    // /// <summary>
+    // /// Gets atom quantities used for the collisions.
+    // /// </summary>
+    // [BurstCompile]
+    // struct GetAtomsJob : IJobForEachWithEntity<Translation, CollisionRadius, Mass, Velocity>
+    // {
+    //     public NativeArray<Translation> Translations;
+    //     public NativeArray<Mass> Masses;
+    //     public NativeArray<CollisionRadius> Radii;
+    //     public NativeArray<Velocity> Velocities;
 
-        public void Execute(Entity entity, int index,
-            [ReadOnly] ref Translation translation,
-            [ReadOnly] ref CollisionRadius radius,
-            [ReadOnly] ref Mass mass,
-            [ReadOnly] ref Velocity velocity)
-        {
-            Translations[index] = translation;
-            Radii[index] = radius;
-            Masses[index] = mass;
-            Velocities[index] = velocity;
-        }
-    }
+    //     public void Execute(Entity entity, int index,
+    //         [ReadOnly] ref Translation translation,
+    //         [ReadOnly] ref CollisionRadius radius,
+    //         [ReadOnly] ref Mass mass,
+    //         [ReadOnly] ref Velocity velocity)
+    //     {
+    //         Translations[index] = translation;
+    //         Radii[index] = radius;
+    //         Masses[index] = mass;
+    //         Velocities[index] = velocity;
+    //     }
+    // }
 
     /// <summary>
     /// Sorts atoms into spatial hashmap
