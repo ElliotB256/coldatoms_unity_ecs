@@ -14,7 +14,7 @@ namespace Calculation
         public const int V_PER_SEGMENT = 8;
         public const int I_PER_SEGMENT = 6 * 3;
 
-        protected override void OnCreateManager()
+        protected override void OnCreate()
         {
             //Enabled = false;
         }
