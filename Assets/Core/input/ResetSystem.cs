@@ -9,7 +9,7 @@ public class ResetSystem : JobComponentSystem
     EntityQuery AtomQuery;
     private bool _lastInputState = false;
 
-    protected override void OnCreateManager()
+    protected override void OnCreate()
     {
         AtomQuery = GetEntityQuery(new EntityQueryDesc
         {
