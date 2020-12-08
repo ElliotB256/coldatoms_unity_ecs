@@ -13,7 +13,7 @@ public class OutOfBoundsSystem : JobComponentSystem
 
     EntityCommandBufferSystem CommandBufferSystem;
 
-    protected override void OnCreateManager()
+    protected override void OnCreate()
     {
         CommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
     }
