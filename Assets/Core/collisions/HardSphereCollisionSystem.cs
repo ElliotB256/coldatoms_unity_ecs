@@ -24,15 +24,13 @@ public class HardSphereCollisionSystem : JobComponentSystem
     {
         int atomNumber = AtomQuery.CalculateEntityCount();
         InitialiseMemory(atomNumber);
-        
-        // ToComponentDataArray has been removed in newer version 
-        // Replace with GetComponentDataFromEntity?
+       
         
         // Collect atom data
-        Masses = AtomQuery.ToComponentDataArray<Mass>(Allocator.TempJob, out var masJob);
-        Translations = AtomQuery.ToComponentDataArray<Translation>(Allocator.TempJob, out var posJob);
-        Radii = AtomQuery.ToComponentDataArray<CollisionRadius>(Allocator.TempJob, out var radJob);
-        Velocities = AtomQuery.ToComponentDataArray<Velocity>(Allocator.TempJob, out var velJob);
+        Masses = AtomQuery.ToComponentDataArrayAsync<Mass>(Allocator.TempJob, out var masJob);
+        Translations = AtomQuery.ToComponentDataArrayAsync<Translation>(Allocator.TempJob, out var posJob);
+        Radii = AtomQuery.ToComponentDataArrayAsync<CollisionRadius>(Allocator.TempJob, out var radJob);
+        Velocities = AtomQuery.ToComponentDataArrayAsync<Velocity>(Allocator.TempJob, out var velJob);
         var getAtomData = JobHandle.CombineDependencies(JobHandle.CombineDependencies(masJob, posJob, radJob), velJob);
 
         var sortAtoms = new SortAtomsJob {
@@ -253,6 +251,7 @@ public class HardSphereCollisionSystem : JobComponentSystem
                 if (math.dot(vel1, relativeSeparation) > 0f & math.dot(vel2, relativeSeparation) < 0f)
                 {
                     // swap momenta in CoM frame
+                                                    // Why not just use Particles[a] here instead of comv + vel1?
                     Velocities[a] = new Velocity { Value = comv + vel1 - (2/relativeSeparationMagSq)*math.dot(vel1, relativeSeparation)*relativeSeparation };
                     Velocities[b] = new Velocity { Value = comv + vel2 - (2/relativeSeparationMagSq)*math.dot(vel2, relativeSeparation)*relativeSeparation };
                     // Velocities[a] = new Velocity { Value = comv + vel2 * mass2 / mass1 };

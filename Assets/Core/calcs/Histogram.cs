@@ -50,6 +50,7 @@ namespace Calculation
             var counts = new NativeArray<int>(histogramNumber * Histogram.MAX_BIN_NUMBER, Allocator.TempJob, NativeArrayOptions.ClearMemory);
             var components = AtomQuery.ToComponentDataArray<TComponent>(Allocator.TempJob);
 
+            
             var getCount = new GetCountsJob
             {
                 Counts = counts,
@@ -72,7 +73,7 @@ namespace Calculation
             [NativeDisableParallelForRestriction] public NativeArray<int> Counts;
             [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<TComponent> Components;
 
-            public void Execute(Entity entity, int index, ref Histogram histogram)
+            public void Execute(Entity entity, int index, [ReadOnly] ref Histogram histogram)
             {
                 int offset = index * Histogram.MAX_BIN_NUMBER;
                 for (int i = 0; i < Components.Length; i++)

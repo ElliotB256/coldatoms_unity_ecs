@@ -14,7 +14,7 @@ public struct TabularRFKnife : IComponentData
 }
 
 [Serializable]
-[GenerateAuthoringComponent]
+// [GenerateAuthoringComponent]
 public struct TabularRFKnifeElement : IBufferElementData
 {
     public float Duration;
