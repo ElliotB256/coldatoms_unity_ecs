@@ -1,4 +1,4 @@
-﻿using Integration;
+using Integration;
 using System;
 using Unity.Burst;
 using Unity.Collections;
@@ -53,6 +53,8 @@ public class UpdatePositionWithWallSystem : JobComponentSystem
             [ReadOnly] ref Mass mass,
             [ReadOnly] ref PrevForce force)
         {
+                // dx = v*dt + 0.5 * a * dt^2
+
             var delta = velocity.Value * dT + 0.5f * (force.Value / mass.Value) * dT * dT;
 
             if (Walls.Length == 0)
@@ -93,6 +95,8 @@ public class UpdatePositionWithWallSystem : JobComponentSystem
                     
                     var normal = Walls[wallIndex].Normal;
                     direction = math.normalize(direction - 2 * math.dot(direction, normal) * normal);
+
+                    // instead of moving the atom away from the wall, just check that it is moving towards the wall for a collision to occur 
 
                     //move atom away from wall
                         // I think this is causing some leaks, very low number so may not be worth fixing 

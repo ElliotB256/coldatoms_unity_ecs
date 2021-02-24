@@ -6,11 +6,12 @@ using Unity.Transforms;
 using Unity.Mathematics;
 
 /// <summary>
-/// Update Piston positions
+/// Update Piston translation value from UpdatePistonPositionSystem
+    // Im sure I am going about this wrong and don't need two systems for this
 /// </summary>
 [UpdateBefore(typeof(ForceCalculationSystems))]
 [UpdateInGroup(typeof(FixedUpdateGroup))]
-public class UpdatePistonPositionSystem : JobComponentSystem
+public class UpdatePistonComponentsSystem : JobComponentSystem
 {
     protected override void OnCreate()
     {
@@ -18,18 +19,11 @@ public class UpdatePistonPositionSystem : JobComponentSystem
     }
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
-        float DeltaTime = FixedUpdateGroup.FIXED_TIME_DELTA;
         return Entities
-            .WithName("Piston")
+            .WithNone<PrevForce>()
             .ForEach(
-            (ref Piston piston) => {
-                piston.Translation += piston.Velocity * DeltaTime;
-                // if (piston.Translation.x < -3 || piston.Translation.x > 3)
-                // {
-                //     piston.Velocity *= -1;
-                // }
+            (ref Translation translation, in Piston piston) => {
+                translation.Value = piston.Translation;
             }).Schedule(inputDependencies);
     }
 }
-
-

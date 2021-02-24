@@ -58,7 +58,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb676996e2f3ffb46be05e024c7f0ff7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  color: {r: 1, g: 0.05809614, b: 0, a: 0}
+  color: {r: 0.098039225, g: 0.098039225, b: 0.098039225, a: 0}
 --- !u!114 &762021875086438983
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -75,7 +75,7 @@ MonoBehaviour:
   Material: {fileID: 2100000, guid: b4c8a2b0b414f7143a47fe7965bc8649, type: 2}
   SamplingInterval: 0.1
   YAxisMin: 0
-  YAxisMax: 1000
+  YAxisMax: 200
   XAxisMin: 0
-  XAxisMax: 30
-  BinNumber: 60
+  XAxisMax: 20
+  BinNumber: 20

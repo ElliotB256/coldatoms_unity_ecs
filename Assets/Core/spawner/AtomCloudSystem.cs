@@ -33,19 +33,21 @@ public class AtomCloudSystem : JobComponentSystem
             {
                 var instance = CommandBuffer.Instantiate(index, cloud.Atom);
 
-                // Place the instantiated in a grid with some noise
+                    // Place the instantiated in a grid with some noise
                 var theta = Random.NextFloat(0f, 1f) * math.PI;
                 var phi = Random.NextFloat(0f, 1f) * 2 * math.PI;
                 var r = Random.NextFloat(0f, cloud.Radius);
+                    // conditional operator ?: (condition ? consequent : alternative)
                 var zScale = cloud.ThreeDimensions ? 1.0f : 0.0f;
                 var position = new float3(
                     r * math.sin(theta) * math.cos(phi),
                     r * math.sin(theta) * math.sin(phi),
+                        // Here the z extent is r or 0 depending on the cloud.ThreeDimensions condidition
                     zScale*r * math.cos(theta)
                     );
                 CommandBuffer.SetComponent(index, instance, new Translation { Value = position + location.Position });
 
-                // Give random velocities
+                    // Give random velocities
                 var velocity = new float3(
                     Random.NextFloat(-1f, 1f),
                     Random.NextFloat(-1f, 1f),
@@ -64,6 +66,8 @@ public class AtomCloudSystem : JobComponentSystem
         var job = new SpawnJob
         {
             CommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
+                // Does the 10000 limit the number of unique positions/velocities?
+                    // I thought the second argument was the upper limit 
             Random = new Random((uint)UnityEngine.Random.Range(1, 10000))
         }.Schedule(this, inputDeps);
         m_EntityCommandBufferSystem.AddJobHandleForProducer(job);
