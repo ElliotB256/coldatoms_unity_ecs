@@ -29,6 +29,17 @@ public class AtomCloudSystem : JobComponentSystem
             if (!cloud.ShouldSpawn)
                 return;
 
+                // Spawn special atoms to test features
+            // for (int i = 0; i < 2; i++)
+            // {
+            //     var instance = CommandBuffer.Instantiate(index, cloud.Atom);
+            //     var position = new float3(0f, i + 1f, 0f);
+            //     CommandBuffer.SetComponent(index, instance, new Translation { Value = position});
+            //     var velocity = new float3(1f, 0f, 0f);
+            //     CommandBuffer.SetComponent(index, instance, new Velocity { Value = velocity });
+            // }
+
+                // Spawning the main cloud (for indicies greater than 2)
             for (int i = 0; i < cloud.Number; i++)
             {
                 var instance = CommandBuffer.Instantiate(index, cloud.Atom);

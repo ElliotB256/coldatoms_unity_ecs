@@ -20,14 +20,18 @@ public class UpdatePistonPositionSystem : JobComponentSystem
     {
         float DeltaTime = FixedUpdateGroup.FIXED_TIME_DELTA;
         return Entities
-            .WithName("Piston")
+            // .WithName("Piston")
+            .WithAll<Piston>()
             .ForEach(
-            (ref Piston piston) => {
-                piston.Translation += piston.Velocity * DeltaTime;
-                // if (piston.Translation.x < -3 || piston.Translation.x > 3)
-                // {
-                //     piston.Velocity *= -1;
-                // }
+            (ref Translation translation, ref Velocity velocity) => {
+                translation.Value += velocity.Value * DeltaTime;
+
+                    // Bouncing the Piston back and forth to prevent 0 volume conditions
+                    // Maybe have this in another system
+                if (translation.Value.x < -5 || translation.Value.x > 5)
+                {
+                    velocity.Value *= -1;
+                }
             }).Schedule(inputDependencies);
     }
 }

@@ -31,7 +31,8 @@ public class HardSphereCollisionSystem : JobComponentSystem
         Translations = AtomQuery.ToComponentDataArrayAsync<Translation>(Allocator.TempJob, out var posJob);
         Radii = AtomQuery.ToComponentDataArrayAsync<CollisionRadius>(Allocator.TempJob, out var radJob);
         Velocities = AtomQuery.ToComponentDataArrayAsync<Velocity>(Allocator.TempJob, out var velJob);
-        var getAtomData = JobHandle.CombineDependencies(JobHandle.CombineDependencies(masJob, posJob, radJob), velJob);
+        Zones = AtomQuery.ToComponentDataArrayAsync<Zone>(Allocator.TempJob, out var zoneJob);
+        var getAtomData = JobHandle.CombineDependencies(JobHandle.CombineDependencies(masJob, posJob, radJob),zoneJob, velJob);
 
         var sortAtoms = new SortAtomsJob {
             BinnedAtoms = BinnedAtoms.AsParallelWriter(),
@@ -52,6 +53,7 @@ public class HardSphereCollisionSystem : JobComponentSystem
             Masses = Masses,
             Radii = Radii,
             Velocities = Velocities,
+            Zones = Zones,
             Collided = Collided
         }.Schedule(atomNumber, 1, getUniqueKeys);
 
@@ -64,6 +66,7 @@ public class HardSphereCollisionSystem : JobComponentSystem
         Masses.Dispose(updates);
         Radii.Dispose(updates);
         Velocities.Dispose(updates);
+        Zones.Dispose(updates);
         BinnedAtoms.Dispose(updates);
         UniqueBinIds.Dispose(updates);
         Collided.Dispose(updates);
@@ -74,10 +77,6 @@ public class HardSphereCollisionSystem : JobComponentSystem
 
     public void InitialiseMemory(int atomNumber)
     {
-        // Translations = new NativeArray<Translation>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        // Masses = new NativeArray<Mass>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        // Radii = new NativeArray<CollisionRadius>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        // Velocities = new NativeArray<Velocity>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         BinnedAtoms = new NativeMultiHashMap<int, int>(atomNumber, Allocator.TempJob);
         UniqueBinIds = new NativeList<int>(atomNumber, Allocator.TempJob);
         Collided = new NativeArray<bool>(atomNumber, Allocator.TempJob, NativeArrayOptions.ClearMemory);
@@ -92,6 +91,7 @@ public class HardSphereCollisionSystem : JobComponentSystem
                     ComponentType.ReadOnly<Translation>(),
                     ComponentType.ReadOnly<CollisionRadius>(),
                     ComponentType.ReadOnly<Mass>(),
+                    ComponentType.ReadOnly<Zone>(),
                     ComponentType.ReadWrite<Velocity>(),
                     ComponentType.ReadWrite<Trapped>(),
                     ComponentType.ReadWrite<CollisionStats>()
@@ -103,6 +103,7 @@ public class HardSphereCollisionSystem : JobComponentSystem
     NativeArray<Translation> Translations;
     NativeArray<Mass> Masses;
     NativeArray<CollisionRadius> Radii;
+    NativeArray<Zone> Zones;
     NativeArray<Velocity> Velocities;
     NativeList<int> UniqueBinIds;
     NativeArray<bool> Collided;
@@ -113,30 +114,6 @@ public class HardSphereCollisionSystem : JobComponentSystem
     /// </summary>
     NativeMultiHashMap<int, int> BinnedAtoms;
 
-    //                                          I think this is redundant 
-    // /// <summary>
-    // /// Gets atom quantities used for the collisions.
-    // /// </summary>
-    // [BurstCompile]
-    // struct GetAtomsJob : IJobForEachWithEntity<Translation, CollisionRadius, Mass, Velocity>
-    // {
-    //     public NativeArray<Translation> Translations;
-    //     public NativeArray<Mass> Masses;
-    //     public NativeArray<CollisionRadius> Radii;
-    //     public NativeArray<Velocity> Velocities;
-
-    //     public void Execute(Entity entity, int index,
-    //         [ReadOnly] ref Translation translation,
-    //         [ReadOnly] ref CollisionRadius radius,
-    //         [ReadOnly] ref Mass mass,
-    //         [ReadOnly] ref Velocity velocity)
-    //     {
-    //         Translations[index] = translation;
-    //         Radii[index] = radius;
-    //         Masses[index] = mass;
-    //         Velocities[index] = velocity;
-    //     }
-    // }
 
     /// <summary>
     /// Sorts atoms into spatial hashmap
@@ -180,6 +157,7 @@ public class HardSphereCollisionSystem : JobComponentSystem
         [NativeDisableParallelForRestriction] [ReadOnly] public NativeArray<Translation> Translations;
         [NativeDisableParallelForRestriction] [ReadOnly] public NativeArray<Mass> Masses;
         [NativeDisableParallelForRestriction] [ReadOnly] public NativeArray<CollisionRadius> Radii;
+        [NativeDisableParallelForRestriction] [ReadOnly] public NativeArray<Zone> Zones;
         [NativeDisableParallelForRestriction] public NativeArray<Velocity> Velocities;
         [NativeDisableParallelForRestriction] public NativeArray<bool> Collided;
 
@@ -226,39 +204,43 @@ public class HardSphereCollisionSystem : JobComponentSystem
         /// <param name="b">index of second atom</param>
         public void TryCollide(int a, int b)
         {
-            // Velocity in center of mass frame
-            float3 vel1 = Velocities[a].Value;
-            float3 vel2 = Velocities[b].Value;
-            
-            float mass1 = Masses[a].Value;
-            float mass2 = Masses[b].Value;
-
-            float3 comv = (mass1 * vel1 + mass2 * vel2) / (mass1 + mass2);
-
-            //transform velocities to CoM frame
-            vel1 -= comv;
-            vel2 -= comv;
-
-            //Only swap if velocities are facing each other in com frame
-            if (math.dot(vel1, vel2) < 0f)
+            // Add a check for particles in the same Zone
+            if (Zones[a].Value == Zones[b].Value)
             {
+                // Velocity in center of mass frame
+                float3 vel1 = Velocities[a].Value;
+                float3 vel2 = Velocities[b].Value;
+            
+                float mass1 = Masses[a].Value;
+                float mass2 = Masses[b].Value;
 
-                float3 relativeSeparation = Translations[b].Value - Translations[a].Value;
-                float relativeSeparationMagSq = math.lengthsq(relativeSeparation);
+                float3 comv = (mass1 * vel1 + mass2 * vel2) / (mass1 + mass2);
 
-                // The positions of the particles only need to be proportional to this relativeSeparation as we only care about the sign.
-                // Only if both particles have negative dot product 
-                if (math.dot(vel1, relativeSeparation) > 0f & math.dot(vel2, relativeSeparation) < 0f)
+                //transform velocities to CoM frame
+                vel1 -= comv;
+                vel2 -= comv;
+
+                //Only swap if velocities are facing each other in com frame
+                if (math.dot(vel1, vel2) < 0f)
                 {
-                    // swap momenta in CoM frame
-                                                    // Why not just use Particles[a] here instead of comv + vel1?
-                    Velocities[a] = new Velocity { Value = comv + vel1 - (2/relativeSeparationMagSq)*math.dot(vel1, relativeSeparation)*relativeSeparation };
-                    Velocities[b] = new Velocity { Value = comv + vel2 - (2/relativeSeparationMagSq)*math.dot(vel2, relativeSeparation)*relativeSeparation };
-                    // Velocities[a] = new Velocity { Value = comv + vel2 * mass2 / mass1 };
-                    // Velocities[b] = new Velocity { Value = comv + vel1 * mass1 / mass2 };
 
-                    Collided[a] = true;
-                    Collided[b] = true;
+                    float3 relativeSeparation = Translations[b].Value - Translations[a].Value;
+                    float relativeSeparationMagSq = math.lengthsq(relativeSeparation);
+
+                    // The positions of the particles only need to be proportional to this relativeSeparation as we only care about the sign.
+                    // Only if both particles have negative dot product 
+                    if (math.dot(vel1, relativeSeparation) > 0f & math.dot(vel2, relativeSeparation) < 0f)
+                    {
+                        // swap momenta in CoM frame
+                            // Why not just use Particles[a] here instead of comv + vel1?
+                        Velocities[a] = new Velocity { Value = comv + vel1 - (2/relativeSeparationMagSq)*math.dot(vel1, relativeSeparation)*relativeSeparation };
+                        Velocities[b] = new Velocity { Value = comv + vel2 - (2/relativeSeparationMagSq)*math.dot(vel2, relativeSeparation)*relativeSeparation };
+                        // Velocities[a] = new Velocity { Value = comv + vel2 * mass2 / mass1 };
+                        // Velocities[b] = new Velocity { Value = comv + vel1 * mass1 / mass2 };
+
+                        Collided[a] = true;
+                        Collided[b] = true;
+                 }
                 }
             }
         }
