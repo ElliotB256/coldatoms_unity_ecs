@@ -28,10 +28,10 @@ public class UpdatePistonPositionSystem : JobComponentSystem
 
                     // Bouncing the Piston back and forth to prevent 0 volume conditions
                     // Maybe have this in another system
-                if (translation.Value.x < -5 || translation.Value.x > 5)
-                {
-                    velocity.Value *= -1;
-                }
+                // if (translation.Value.x < -5 || translation.Value.x > 5)
+                // {
+                //     velocity.Value *= -1;
+                // }
             }).Schedule(inputDependencies);
     }
 }

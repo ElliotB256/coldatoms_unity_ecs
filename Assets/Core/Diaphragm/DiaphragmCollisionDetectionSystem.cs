@@ -14,6 +14,7 @@ public class DiaphragmCollisionDetectionSystem : JobComponentSystem
 {
     EntityQuery DiaphragmQuery;
 
+
     protected override void OnCreate()
     {
         // Enabled = true;
@@ -46,16 +47,16 @@ public class DiaphragmCollisionDetectionSystem : JobComponentSystem
                 in Translation translation,
                 in Velocity velocity,
                 in Mass mass,
-                in Zone zone) => 
+                in Zone zone,
+                in CollisionRadius collisionRadius) => 
                 {                
                     // If inbetween the Piston and the Diaphragm
                     if (zone.Value == 1)
                     {
-                        if (translation.Value.x > DiaphragmTranslation[0].Value.x) {
+                        if (translation.Value.x > DiaphragmTranslation[0].Value.x - collisionRadius.Value) {
 
                             float3 CoMVelocity = (DiaphragmMass[0].Value * DiaphragmVelocity[0].Value + mass.Value*velocity.Value)/(DiaphragmMass[0].Value + mass.Value);
                             float3 particleCoMVelocity = velocity.Value - CoMVelocity;
-                            // float3 diaphragmCoMVelocity = DiaphragmVelocity[0].Value - CoMVelocity;
                         
                             if (particleCoMVelocity.x > 0f) {
                                 diaphragmColliding.Value = true;
@@ -65,10 +66,9 @@ public class DiaphragmCollisionDetectionSystem : JobComponentSystem
                         // if inbetween the diaphragm and the right hand wall
                     else if (zone.Value == 2)
                     {
-                        if (translation.Value.x < DiaphragmTranslation[0].Value.x) {
+                        if (translation.Value.x < DiaphragmTranslation[0].Value.x + collisionRadius.Value) {
                             float3 CoMVelocity = (DiaphragmMass[0].Value * DiaphragmVelocity[0].Value + mass.Value*velocity.Value)/(DiaphragmMass[0].Value + mass.Value);
                             float3 particleCoMVelocity = velocity.Value - CoMVelocity;
-                            // float3 diaphragmCoMVelocity = DiaphragmVelocity[0].Value - CoMVelocity;
                         
                             if (particleCoMVelocity.x < 0f) {
                                 diaphragmColliding.Value = true;

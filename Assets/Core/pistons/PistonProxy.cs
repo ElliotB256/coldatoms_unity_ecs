@@ -8,13 +8,13 @@ public class PistonProxy : MonoBehaviour, IConvertGameObjectToEntity
 {
     [Tooltip("Initial velocity of the piston.")]
         // Not sure if this attribute works with a vector3?
-    // [Serializable]
+    [SerializeField]
     private Vector3 initialVelocity = new Vector3(-0.2f, 0f, 0f);
 
     [Tooltip("Mass of the piston")]
     // Need to correctly implement infinite mass in the system
         // Currently using CoM to ensure the velocity check works
-    // [Serializable]
+    [SerializeField]
     private float mass = 1000000f;
 
     // [Tooltip("Initial position of the piston")]
