@@ -81,18 +81,11 @@ public class ZoneSystem : JobComponentSystem
             // At the moment I am assuming that the Piston is only moving in the x direction and its normal is also in this direction.
             if (pistonTranslation.Length + diaphragmTranslation.Length == 0)
             {
-                // Setting this value means the particles will not attempt to 
-                zone.Value = 3;
+                // Setting this value means the particles will not attempt to find a zone  
+                zone.Value = -2;
                 return;
             }
-            
 
-            // This is causing some particles to jump to the other side, 
-                // Possibly only run this at the start for this simple piston compression?
-                    // Later I will have to come up with a better way to account for particles moving Zones
-                // I Need to learn more about unity to only run this at the start
-                    // This keeps the particles on the left 
-                // There has to be a better way of doing this just once at the start
             if (zone.Value == -1)
             {
                 if (diaphragmTranslation.Length != 0 && translation.Value.x > diaphragmTranslation[0].Value.x) {

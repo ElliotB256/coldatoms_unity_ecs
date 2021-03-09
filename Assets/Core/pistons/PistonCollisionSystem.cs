@@ -62,7 +62,7 @@ public class PistonCollisionSystem : JobComponentSystem
     [RequireComponentTag(typeof(Atom))]
         // Why can't I include Atom in this list? 
             // Is it because I am not doing anything with it?
-    struct UpdatePositionWithPistonJob : IJobForEachWithEntity<Translation, Velocity, Mass, Zone>
+    struct UpdatePositionWithPistonJob : IJobForEachWithEntity<Translation, Velocity, Mass, CollisionRadius, Zone>
     {
         public float dT;
         [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<Translation> pistonTranslation;
@@ -75,6 +75,7 @@ public class PistonCollisionSystem : JobComponentSystem
             ref Translation translation,
             ref Velocity velocity,
             [ReadOnly] ref Mass mass,
+            [ReadOnly] ref CollisionRadius radius,
             [ReadOnly] ref Zone zone
             )
         {
@@ -91,7 +92,7 @@ public class PistonCollisionSystem : JobComponentSystem
 
                 if (zone.Value == 0)
                 { 
-                    if (translation.Value.x > pistonTranslation[i].Value.x) {
+                    if (translation.Value.x > pistonTranslation[i].Value.x - radius.Value) {
                             //Change these from vectors to just the scalar x value
                         float3 CoMVelocity = (pistonMass[i].Value * pistonVelocity[i].Value + mass.Value*velocity.Value)/(pistonMass[i].Value + mass.Value);
                         float3 particleCoMVelocity = velocity.Value - CoMVelocity;
@@ -108,7 +109,7 @@ public class PistonCollisionSystem : JobComponentSystem
                     // remove this last or when the diaphragm is not in place
                 if (zone.Value == 1 || zone.Value == 2)
                 {
-                    if (translation.Value.x < pistonTranslation[i].Value.x) {
+                    if (translation.Value.x < pistonTranslation[i].Value.x + radius.Value) {
 
                         float3 CoMVelocity = (pistonMass[i].Value * pistonVelocity[i].Value + mass.Value*velocity.Value)/(pistonMass[i].Value + mass.Value);
                         float3 particleCoMVelocity = velocity.Value - CoMVelocity;
