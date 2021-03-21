@@ -82,23 +82,51 @@ public class ZoneSystem : JobComponentSystem
             if (pistonTranslation.Length + diaphragmTranslation.Length == 0)
             {
                 // Setting this value means the particles will not attempt to find a zone  
-                zone.Value = -2;
+                zone.Value = 0;
                 return;
             }
-
-            if (zone.Value == -1)
+            
+            else if (zone.Value == -1)
             {
-                if (diaphragmTranslation.Length != 0 && translation.Value.x > diaphragmTranslation[0].Value.x) {
-                    zone.Value = 2;             
+                if (pistonTranslation.Length + diaphragmTranslation.Length == 2)
+                {  
+
+                    if (translation.Value.x > diaphragmTranslation[0].Value.x) {
+                        zone.Value = 2;             
+                    }
+                    // At the moment everything assumes a piston and a diaphram
+                    else if (translation.Value.x > pistonTranslation[0].Value.x)
+                    {
+                        zone.Value = 1;
+                    }
+                    else
+                    {
+                        zone.Value = 0;
+                    }
                 }
-                // At the moment everything assumes a piston and a diaphram
-                else if (pistonTranslation.Length != 0 && translation.Value.x > pistonTranslation[0].Value.x)
+
+                else if (pistonTranslation.Length == 1)
                 {
-                    zone.Value = 1;
+                    if (translation.Value.x > pistonTranslation[0].Value.x)
+                    {
+                        zone.Value = 1;
+                    }
+                    else
+                    {
+                        zone.Value = 0;
+                    }
                 }
-                else
+
+                else if (diaphragmTranslation.Length == 1)
                 {
-                    zone.Value = 0;
+                    if (translation.Value.x > diaphragmTranslation[0].Value.x)
+                    {
+                        zone.Value = 1;
+                    }
+                    else
+                    {
+                        zone.Value = 0;
+                    }
                 }
             }
         }

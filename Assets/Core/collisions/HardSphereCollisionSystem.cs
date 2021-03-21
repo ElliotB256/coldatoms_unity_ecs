@@ -265,7 +265,8 @@ public class HardSphereCollisionSystem : JobComponentSystem
         public void Execute(Entity entity, int index, ref CollisionStats stats)
         {
             if (Collided[index])
-                stats.TimeSinceLastCollision = 0f;
+                // stats.TimeSinceLastCollision = 0f;
+                stats.CollidedThisFrame = true;
         }
     }
 }

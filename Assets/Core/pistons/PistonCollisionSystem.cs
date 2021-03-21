@@ -19,6 +19,7 @@ using UnityEngine;
 public class PistonCollisionSystem : JobComponentSystem
 {
     EntityQuery PistonQuery;
+    // static float holeSize = 0.1f;
 
     protected override void OnCreate()
     {   
@@ -29,7 +30,8 @@ public class PistonCollisionSystem : JobComponentSystem
                 typeof(Translation),
                 ComponentType.ReadOnly<Velocity>(),
                 ComponentType.ReadOnly<Mass>(),
-                ComponentType.ReadOnly<Piston>()
+                ComponentType.ReadOnly<Piston>(),
+                ComponentType.ReadOnly<WIndex>()
             }
         };
         PistonQuery = GetEntityQuery(query);
@@ -43,13 +45,15 @@ public class PistonCollisionSystem : JobComponentSystem
         NativeArray<Translation> PistonTranslation = PistonQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
         NativeArray<Velocity> PistonVelocity = PistonQuery.ToComponentDataArray<Velocity>(Allocator.TempJob);
         NativeArray<Mass> PistonMass = PistonQuery.ToComponentDataArray<Mass>(Allocator.TempJob);
+        NativeArray<WIndex> PistonWIndex = PistonQuery.ToComponentDataArray<WIndex>(Allocator.TempJob);
 
         return new UpdatePositionWithPistonJob
         {
             dT = DeltaTime,
             pistonTranslation = PistonTranslation,
             pistonVelocity = PistonVelocity,
-            pistonMass = PistonMass
+            pistonMass = PistonMass,
+            pistonWIndex = PistonWIndex
 
         }.Schedule(this, inputDependencies );
             // Should I use run here to just form the array?
@@ -62,21 +66,23 @@ public class PistonCollisionSystem : JobComponentSystem
     [RequireComponentTag(typeof(Atom))]
         // Why can't I include Atom in this list? 
             // Is it because I am not doing anything with it?
-    struct UpdatePositionWithPistonJob : IJobForEachWithEntity<Translation, Velocity, Mass, CollisionRadius, Zone>
+    struct UpdatePositionWithPistonJob : IJobForEachWithEntity<Translation, Velocity, WallCollisions, Zone, Mass, CollisionRadius>
     {
         public float dT;
         [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<Translation> pistonTranslation;
         [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<Velocity> pistonVelocity;
         [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<Mass> pistonMass;
+        [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<WIndex> pistonWIndex;
 
         public void Execute(
             Entity entity,
             int index,
             ref Translation translation,
             ref Velocity velocity,
+            ref WallCollisions wallCollisions,
+            ref Zone zone,
             [ReadOnly] ref Mass mass,
-            [ReadOnly] ref CollisionRadius radius,
-            [ReadOnly] ref Zone zone
+            [ReadOnly] ref CollisionRadius radius
             )
         {
             // At the moment I am assuming that the Piston is only moving in the x direction and its normal is also in this direction.
@@ -93,6 +99,16 @@ public class PistonCollisionSystem : JobComponentSystem
                 if (zone.Value == 0)
                 { 
                     if (translation.Value.x > pistonTranslation[i].Value.x - radius.Value) {
+                            // Do an effusion system rather than this
+                        // if ( translation.Value.y > -holeSize && translation.Value.y < holeSize && translation.Value.z > -holeSize && translation.Value.z < holeSize)
+                        // {
+                        //     if (velocity.Value.x > 0)
+                        //     {
+                        //             // Effusion
+                        //         zone.Value = 1;
+                        //     }
+                        // }
+                        // else {
                             //Change these from vectors to just the scalar x value
                         float3 CoMVelocity = (pistonMass[i].Value * pistonVelocity[i].Value + mass.Value*velocity.Value)/(pistonMass[i].Value + mass.Value);
                         float3 particleCoMVelocity = velocity.Value - CoMVelocity;
@@ -100,28 +116,47 @@ public class PistonCollisionSystem : JobComponentSystem
                         
                         // This collision model assuming the piston is an unstoppable force (infinite mass)
                         if (math.dot(particleCoMVelocity, pistonCoMVelocity) < 0f) {
+                                // Update Impulse components
+                                    // The + 1 accounts for the Left index being 7 and right being 6
+                            wallCollisions.WallIndex = pistonWIndex[i].Value + 1;
+                            wallCollisions.Impulse = 2*mass.Value*Mathf.Abs(particleCoMVelocity.x);
+
                             // particleCoMVelocity.x = 2*pistonCoMVelocity.x - particleCoMVelocity.x;
                             // translation.Value.x = Pistons[i].Translation.x - wallDisplacementDistance;
                             velocity.Value.x = 2*pistonVelocity[i].Value.x - velocity.Value.x;
                         }
+                        // }
                     }
                 }
                     // remove this last or when the diaphragm is not in place
                 if (zone.Value == 1 || zone.Value == 2)
                 {
                     if (translation.Value.x < pistonTranslation[i].Value.x + radius.Value) {
-
+                        // if ( translation.Value.y > -holeSize && translation.Value.y < holeSize && translation.Value.z > -holeSize && translation.Value.z < holeSize)
+                        // {
+                        //     if (velocity.Value.x < 0)
+                        //     {
+                        //         // Effusion
+                        //     zone.Value = 0;
+                        // }
+                        // }
+                        // else {
                         float3 CoMVelocity = (pistonMass[i].Value * pistonVelocity[i].Value + mass.Value*velocity.Value)/(pistonMass[i].Value + mass.Value);
                         float3 particleCoMVelocity = velocity.Value - CoMVelocity;
                         float3 pistonCoMVelocity = pistonVelocity[i].Value - CoMVelocity;
                         
                         // This collision model assuming the piston is an unstoppable force (infinite mass)
                         if (math.dot(particleCoMVelocity, pistonCoMVelocity) < 0f) {
+
+                            wallCollisions.WallIndex = pistonWIndex[i].Value;
+                            wallCollisions.Impulse = 2*mass.Value*Mathf.Abs(particleCoMVelocity.x);
+
                             // particleCoMVelocity.x = 2*pistonCoMVelocity.x - particleCoMVelocity.x;
                             // translation.Value.x = Pistons[i].Translation.x - wallDisplacementDistance;
-                            velocity.Value.x = 2*pistonVelocity[i].Value.x - velocity.Value.x;                        }
+                            velocity.Value.x = 2*pistonVelocity[i].Value.x - velocity.Value.x;
+                        }
                     }
-
+                    // }
                 }
 
 

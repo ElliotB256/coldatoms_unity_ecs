@@ -4,6 +4,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Transforms;
 using Unity.Mathematics;
+using UnityEngine;
 
 /// <summary>
 /// Finds the particles that are colliding with the Diaphragm this frame
@@ -13,7 +14,7 @@ using Unity.Mathematics;
 public class DiaphragmCollisionDetectionSystem : JobComponentSystem
 {
     EntityQuery DiaphragmQuery;
-
+    EntityQuery PistonQuery;
 
     protected override void OnCreate()
     {
@@ -29,7 +30,17 @@ public class DiaphragmCollisionDetectionSystem : JobComponentSystem
             }
         };
         DiaphragmQuery = GetEntityQuery(diaphragmQueryDesc);
+
+        var pistonQueryDesc = new EntityQueryDesc
+        {
+            All = new ComponentType[] {
+                ComponentType.ReadOnly<Piston>(),
+                ComponentType.ReadOnly<Translation>()
+            }
+        };
+        PistonQuery = GetEntityQuery(pistonQueryDesc);
     }
+
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
         float DeltaTime = FixedUpdateGroup.FIXED_TIME_DELTA;
@@ -40,10 +51,14 @@ public class DiaphragmCollisionDetectionSystem : JobComponentSystem
         NativeArray<Velocity> DiaphragmVelocity = DiaphragmQuery.ToComponentDataArray<Velocity>(Allocator.TempJob);
         NativeArray<Mass> DiaphragmMass = DiaphragmQuery.ToComponentDataArray<Mass>(Allocator.TempJob);
 
+        NativeArray<Translation> PistonList = PistonQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
+        // int PistonListLength = PistonList.Length()
+
         return Entities
             .WithAll<Atom>()
             .ForEach(
                 (ref DiaphragmColliding diaphragmColliding,
+                ref WallCollisions wallCollisions,
                 in Translation translation,
                 in Velocity velocity,
                 in Mass mass,
@@ -51,7 +66,7 @@ public class DiaphragmCollisionDetectionSystem : JobComponentSystem
                 in CollisionRadius collisionRadius) => 
                 {                
                     // If inbetween the Piston and the Diaphragm
-                    if (zone.Value == 1)
+                    if (zone.Value == PistonList.Length)
                     {
                         if (translation.Value.x > DiaphragmTranslation[0].Value.x - collisionRadius.Value) {
 
@@ -59,24 +74,31 @@ public class DiaphragmCollisionDetectionSystem : JobComponentSystem
                             float3 particleCoMVelocity = velocity.Value - CoMVelocity;
                         
                             if (particleCoMVelocity.x > 0f) {
+                                    // Tag this particle for colliding with the diaphragm
                                 diaphragmColliding.Value = true;
+                                
+                                    // Update the wallCollisions component
+                                wallCollisions.WallIndex = 9;
+                                wallCollisions.Impulse = 2*mass.Value * Mathf.Abs(particleCoMVelocity.x);
                             }
                         }
-                    }
-                        // if inbetween the diaphragm and the right hand wall
-                    else if (zone.Value == 2)
+                    } else if (zone.Value == PistonList.Length + 1)
                     {
+                        // if inbetween the diaphragm and the right hand wall
                         if (translation.Value.x < DiaphragmTranslation[0].Value.x + collisionRadius.Value) {
                             float3 CoMVelocity = (DiaphragmMass[0].Value * DiaphragmVelocity[0].Value + mass.Value*velocity.Value)/(DiaphragmMass[0].Value + mass.Value);
                             float3 particleCoMVelocity = velocity.Value - CoMVelocity;
                         
                             if (particleCoMVelocity.x < 0f) {
                                 diaphragmColliding.Value = true;
+
+                                wallCollisions.WallIndex = 8;
+                                wallCollisions.Impulse = 2*mass.Value * Mathf.Abs(particleCoMVelocity.x);
                             }
                         }
                     }   
 
-            }).Schedule(inputDependencies);
+                }).Schedule(inputDependencies);
     }
 }
 

@@ -1,4 +1,5 @@
-﻿using Integration;
+﻿using Unity.Burst;
+using Integration;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;

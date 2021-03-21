@@ -16,7 +16,11 @@ public class PistonProxy : MonoBehaviour, IConvertGameObjectToEntity
         // Currently using CoM to ensure the velocity check works
     [SerializeField]
     private float mass = 1000000f;
-
+    
+    [SerializeField]
+    private int index = -1;
+    [SerializeField]
+    private int indexLeft = -1;
     // [Tooltip("Initial position of the piston")]
     // public Vector3 initialPosition = new Vector3(10f, 0f, 0f);//transform.position;
 
@@ -26,5 +30,9 @@ public class PistonProxy : MonoBehaviour, IConvertGameObjectToEntity
         dstManager.AddComponentData(entity, new Mass { Value = mass});
         dstManager.AddComponentData(entity, new Velocity() {Value = initialVelocity});
         dstManager.AddComponentData(entity, new Piston());
+        dstManager.AddComponentData(entity, new WIndex{ Value = index});
+        dstManager.AddComponentData(entity, new WIndexLeft { Value = indexLeft});
+        dstManager.AddComponentData(entity, new Pressure {Value = 0});
+        dstManager.AddComponentData(entity, new PressureLeft { Value = 0});
     }
 }

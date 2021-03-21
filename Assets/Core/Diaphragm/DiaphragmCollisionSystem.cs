@@ -4,6 +4,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Transforms;
 using Unity.Mathematics;
+using UnityEngine;
 
 /// <summary>
 /// Collides particles that have been tagged to collide with the Diaphragm
@@ -12,6 +13,7 @@ using Unity.Mathematics;
 [UpdateInGroup(typeof(FixedUpdateGroup))]
 public class DiaphragmCollisionSystem : SystemBase
 {
+        // I don't think I am using this?
     EntityQuery DiaphragmQuery;
 
     protected override void OnCreate()
@@ -31,17 +33,21 @@ public class DiaphragmCollisionSystem : SystemBase
         }).Run();
 
         // Make a native list of all the relevant components
+            // Change this to just getting the single entity rather than the array then choosing the entity
         ComponentDataFromEntity<Velocity> allDiaphragmVelocity = GetComponentDataFromEntity<Velocity>(true);
         ComponentDataFromEntity<Mass> allDiaphragmMass = GetComponentDataFromEntity<Mass>(true);
+        // ComponentDataFromEntity<WIndex> allDiaphragmWIndex = GetComponentDataFromEntity<WIndex>(true);
             // Grab the component from the one diaphragm entity
         Velocity DiaphragmVelocity = allDiaphragmVelocity[tempEntity];
         Mass DiaphragmMass = allDiaphragmMass[tempEntity];
+        // WIndex DiaphragmIndex = allDiaphragmWIndex[tempEntity];
         
         float tempDiaphragmVelocityX = DiaphragmVelocity.Value.x;
 
         Entities.WithAll<Atom>().ForEach(
             (ref DiaphragmColliding diaphragmColliding,
             ref Velocity velocity,
+            ref WallCollisions wallCollisions,
             in Translation translation,
             in Mass mass,
             in Zone zone) => 
@@ -53,8 +59,15 @@ public class DiaphragmCollisionSystem : SystemBase
                 float diaphragmCoMVelocityX = tempDiaphragmVelocityX - CoMVelocityX;
                   
                 particleCoMVelocityX *= -1;
+
+                    // Update the particle impulse
+                // wallCollisions.WallIndex = DiaphragmIndex.Value;
+                // wallCollisions.Impulse = 2*mass.Value*Mathf.Abs(particleCoMVelocityX);
+
                 velocity.Value.x = particleCoMVelocityX + CoMVelocityX;
                 diaphragmColliding.Value = false;
+
+
 
                 diaphragmCoMVelocityX -= 2*particleCoMVelocityX*mass.Value/DiaphragmMass.Value;
                 tempDiaphragmVelocityX = diaphragmCoMVelocityX + CoMVelocityX;

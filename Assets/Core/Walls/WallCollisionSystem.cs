@@ -1,5 +1,6 @@
 using Integration;
 using System;
+using UnityEngine;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -23,6 +24,9 @@ public class UpdatePositionWithWallSystem : JobComponentSystem
         {
             All = new[] {
                     ComponentType.ReadOnly<InfinitePlane>(),
+                    ComponentType.ReadOnly<WIndex>(),
+                    ComponentType.ReadOnly<WZ1Index>(),
+                    ComponentType.ReadOnly<WZ2Index>()
                 }
         });
     }
@@ -31,27 +35,39 @@ public class UpdatePositionWithWallSystem : JobComponentSystem
     {
         float DeltaTime = FixedUpdateGroup.FIXED_TIME_DELTA;
         NativeArray<InfinitePlane> Walls = WallQuery.ToComponentDataArray<InfinitePlane>(Allocator.TempJob);
+        NativeArray<WIndex> WallIndices = WallQuery.ToComponentDataArray<WIndex>(Allocator.TempJob);
+        NativeArray<WZ1Index> WallZ1Indices = WallQuery.ToComponentDataArray<WZ1Index>(Allocator.TempJob);
+        NativeArray<WZ2Index> WallZ2Indices = WallQuery.ToComponentDataArray<WZ2Index>(Allocator.TempJob);
+
         return new UpdatePositionWithWallJob
         {
             dT = DeltaTime,
-            Walls = Walls
-        }.Schedule(this, inputDependencies);
+            Walls = Walls,
+            WallIndices = WallIndices,
+            WallZ1Indices = WallZ1Indices,
+            WallZ2Indices = WallZ2Indices
+        }.Schedule(this, inputDependencies);        
     }
 
     [BurstCompile]
     [RequireComponentTag(typeof(Atom))]
-    struct UpdatePositionWithWallJob : IJobForEachWithEntity<Translation, Velocity, Mass, PrevForce>
+    struct UpdatePositionWithWallJob : IJobForEachWithEntity<Translation, Velocity, WallCollisions, Mass, PrevForce, Zone>
     {
         public float dT;
         [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<InfinitePlane> Walls;
+        [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<WIndex> WallIndices;
+        [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<WZ1Index> WallZ1Indices;
+        [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<WZ2Index> WallZ2Indices;
 
         public void Execute(
             Entity entity,
             int index,
             ref Translation translation,
             ref Velocity velocity,
+            ref WallCollisions wallCollisions,
             [ReadOnly] ref Mass mass,
-            [ReadOnly] ref PrevForce force)
+            [ReadOnly] ref PrevForce force,
+            [ReadOnly] ref Zone zone)
         {
                 // dx = v*dt + 0.5 * a * dt^2
 
@@ -96,6 +112,22 @@ public class UpdatePositionWithWallSystem : JobComponentSystem
                     var normal = Walls[wallIndex].Normal;
                     direction = math.normalize(direction - 2 * math.dot(direction, normal) * normal);
 
+                        // Pressure on each zone of the wall
+                    if (zone.Value == 0) 
+                    {
+                        wallCollisions.WallIndex = WallIndices[wallIndex].Value;
+                    }
+                    else if (zone.Value == 1)
+                    {
+                        wallCollisions.WallIndex = WallZ1Indices[wallIndex].Value;
+                    }
+                    else if (zone.Value == 2)
+                    {
+                        wallCollisions.WallIndex = WallZ2Indices[wallIndex].Value;
+                    }
+
+                    wallCollisions.Impulse = Mathf.Abs(mass.Value*math.dot(velocity.Value, normal));
+
                     // instead of moving the atom away from the wall, just check that it is moving towards the wall for a collision to occur 
 
                     //move atom away from wall
@@ -104,6 +136,7 @@ public class UpdatePositionWithWallSystem : JobComponentSystem
                 }
                 else
                 {
+                        // Normal motion free from collision
                     translation.Value = translation.Value + direction * remaining;
                     remaining = 0f;
                 }
@@ -127,12 +160,3 @@ public class UpdatePositionWithWallSystem : JobComponentSystem
     }
 }
 
-/// <summary>
-/// Represents a triangular segment of wall that atoms can deflect off.
-/// </summary>
-[Serializable]
-public struct InfinitePlane : IComponentData
-{
-    public float3 V1;
-    public float3 Normal;
-}
