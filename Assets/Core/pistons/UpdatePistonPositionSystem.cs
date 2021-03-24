@@ -28,7 +28,7 @@ public class UpdatePistonPositionSystem : JobComponentSystem
 
                     // Bouncing the Piston back and forth to prevent 0 volume conditions
                     // Maybe have this in another system
-                if (translation.Value.x < -10f || translation.Value.x > 2f)
+                if (translation.Value.x < -9.9f || translation.Value.x > 0f)
                 {
                     velocity.Value *= -1;
                 }

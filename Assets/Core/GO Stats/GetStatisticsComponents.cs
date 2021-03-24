@@ -45,24 +45,35 @@ public class GetStatisticsComponents : MonoBehaviour
         if (statisticsEntity == Entity.Null) 
         {
             StatisticsQuery = manager.CreateEntityQuery(StatisticsQueryDesc);
-            statisticsEntity = StatisticsQuery.GetSingletonEntity(); 
-        }
-        else {
+            statisticsEntity = StatisticsQuery.GetSingletonEntity();
 
-            // Here I get the Entity Component Data
-            MeanFreePath Emfp = manager.GetComponentData<MeanFreePath>(statisticsEntity);
-            MeanCollisionTime Emct = manager.GetComponentData<MeanCollisionTime>(statisticsEntity);
-            DynamicBuffer<BufferElementPressure> EPressure = manager.GetBuffer<BufferElementPressure>(statisticsEntity);
-
-        
-            // Here I update the Gameobject Component Data
-            StatsScript.mfp = Emfp.Value;
-            StatsScript.mct = Emct.Value;
-            for (int i = 0; i < EPressure.Length; i++)
-            {
-                StatsScript.pressures[i] = EPressure[i].Value;
-            }
+            PullPushData();
             
+
+        } else 
+        {
+            PullPushData();
+            
+        }
+    }
+
+
+    void PullPushData() {
+        // Here I get the Entity Component Data
+        MeanFreePath Emfp = manager.GetComponentData<MeanFreePath>(statisticsEntity);
+        MeanCollisionTime Emct = manager.GetComponentData<MeanCollisionTime>(statisticsEntity);
+        TotalInternalEnergy EtotIntEnergy = manager.GetComponentData<TotalInternalEnergy>(statisticsEntity);
+        Number EN = manager.GetComponentData<Number>(statisticsEntity);
+        DynamicBuffer<BufferElementPressure> EPressure = manager.GetBuffer<BufferElementPressure>(statisticsEntity);
+ 
+        // Here I update the Gameobject Component Data
+        StatsScript.mfp = Emfp.Value;
+        StatsScript.mct = Emct.Value;
+        StatsScript.totIntEnergy = EtotIntEnergy.Value;
+        StatsScript.N = EN.Value;
+        for (int i = 0; i < EPressure.Length; i++)
+        {
+            StatsScript.pressures[i] = EPressure[i].Value;
         }
     }
 }

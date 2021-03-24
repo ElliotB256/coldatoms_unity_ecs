@@ -48,10 +48,10 @@ public class GatherImpulse : SystemBase
         }).WithoutBurst().Run();
 
             // This loop is over all 6 walls and the right side of the piston and diaphragm
-        Entities.ForEach((ref Pressure pressure, in WIndex wallindex) => {
+        Entities.ForEach((ref Pressure pressure, in WIndex wallIndex) => {
             // Calculate the pressure on each wall based on the total impulse
                 // Divide this by the area 400 = 20x20?
-            pressure.Value = totalImpulse[wallindex.Value];
+            pressure.Value = totalImpulse[wallIndex.Value];
         }).WithoutBurst().Run();
 
         Entities.ForEach((ref PressureZ1 pressure, in WZ1Index wallIndex) => {

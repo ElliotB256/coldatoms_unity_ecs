@@ -18,7 +18,7 @@ public class DiaphragmCollisionDetectionSystem : JobComponentSystem
 
     protected override void OnCreate()
     {
-        // Enabled = true;
+        Enabled = false;
 
         var diaphragmQueryDesc = new EntityQueryDesc
         {
@@ -59,12 +59,14 @@ public class DiaphragmCollisionDetectionSystem : JobComponentSystem
             .ForEach(
                 (ref DiaphragmColliding diaphragmColliding,
                 ref WallCollisions wallCollisions,
+                ref CollisionStats stats,
                 in Translation translation,
                 in Velocity velocity,
                 in Mass mass,
                 in Zone zone,
                 in CollisionRadius collisionRadius) => 
-                {                
+                {
+                    if (DiaphragmTranslation.Length > 0) {
                     // If inbetween the Piston and the Diaphragm
                     if (zone.Value == PistonList.Length)
                     {
@@ -76,6 +78,7 @@ public class DiaphragmCollisionDetectionSystem : JobComponentSystem
                             if (particleCoMVelocity.x > 0f) {
                                     // Tag this particle for colliding with the diaphragm
                                 diaphragmColliding.Value = true;
+                                stats.CollidedThisFrame = true;
                                 
                                     // Update the wallCollisions component
                                 wallCollisions.WallIndex = 9;
@@ -97,7 +100,7 @@ public class DiaphragmCollisionDetectionSystem : JobComponentSystem
                             }
                         }
                     }   
-
+                    }
                 }).Schedule(inputDependencies);
     }
 }

@@ -16,7 +16,7 @@ namespace Calculation
 
         protected override void OnCreate()
         {
-            //Enabled = false;
+            Enabled = false;
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)

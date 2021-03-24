@@ -30,32 +30,43 @@ public class AtomCloudSystem : JobComponentSystem
                 return;
 
                 // Spawn special atoms to test features
-            for (int i = 0; i < 2; i++)
-            {
-                var instance = CommandBuffer.Instantiate(index, cloud.Atom);
-                var position = new float3(0f, i + 3f, 0f);
-                CommandBuffer.SetComponent(index, instance, new Translation { Value = position});
-                var velocity = new float3(0f, 3f, 0f);
-                CommandBuffer.SetComponent(index, instance, new Velocity { Value = velocity });
-            }
+            // for (int i = 0; i < 2; i++)
+            // {
+            //     var instance = CommandBuffer.Instantiate(index, cloud.Atom);
+            //     var position = new float3(0f, i + 3f, 0f);
+            //     CommandBuffer.SetComponent(index, instance, new Translation { Value = position});
+            //     var velocity = new float3(1f, 0f, 0f);
+            //     CommandBuffer.SetComponent(index, instance, new Velocity { Value = velocity });
+            // }
 
                 // Spawning the main cloud (for indicies greater than 2)
-            for (int i = 2; i < cloud.Number; i++)
+            for (int i = 0; i < cloud.Number; i++)
             {
                 var instance = CommandBuffer.Instantiate(index, cloud.Atom);
 
                     // Place the instantiated in a grid with some noise
-                var theta = Random.NextFloat(0f, 1f) * math.PI;
-                var phi = Random.NextFloat(0f, 1f) * 2 * math.PI;
-                var r = Random.NextFloat(0f, cloud.Radius);
+                // var theta = Random.NextFloat(0f, 1f) * math.PI;
+                // var phi = Random.NextFloat(0f, 1f) * 2 * math.PI;
+                // var r = Random.NextFloat(0f, cloud.Radius);
+
                     // conditional operator ?: (condition ? consequent : alternative)
                 var zScale = cloud.ThreeDimensions ? 1.0f : 0.0f;
-                var position = new float3(
-                    r * math.sin(theta) * math.cos(phi),
-                    r * math.sin(theta) * math.sin(phi),
-                        // Here the z extent is r or 0 depending on the cloud.ThreeDimensions condidition
-                    zScale*r * math.cos(theta)
-                    );
+
+                // var position = new float3(
+                // r * math.sin(theta) * math.cos(phi),
+                // r * math.sin(theta) * math.sin(phi),
+                //     // Here the z extent is r or 0 depending on the cloud.ThreeDimensions condidition
+                // zScale*r * math.cos(theta)
+                // );
+
+                    // Can choose this for filling the box.
+                var x = cloud.Radius*(-1f + Random.NextFloat(0f, 1f)*2f);
+                var y = cloud.Radius*(-1f + Random.NextFloat(0f, 1f)*2f);
+                var z = zScale*cloud.Radius*(-1f + Random.NextFloat(0f, 1f)*2f);
+
+                var position = new float3(x, y, z);
+
+
                 CommandBuffer.SetComponent(index, instance, new Translation { Value = position + location.Position });
 
                     // Give random velocities

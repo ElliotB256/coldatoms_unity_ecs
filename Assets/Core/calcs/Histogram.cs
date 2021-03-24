@@ -16,6 +16,7 @@ namespace Calculation
 
         protected override void OnCreate()
         {
+            Enabled = false;
             HistogramQuery = GetEntityQuery(new EntityQueryDesc
             {
                 All = new[] {

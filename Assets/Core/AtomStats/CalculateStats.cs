@@ -14,10 +14,11 @@ public class CalculateStats : SystemBase
     protected override void OnUpdate()
     {
         
-        Entities.ForEach((ref CollisionStats stats, ref LastFreePath lastFreePath, ref LastFreeTime lastFreeTime, in Velocity velocity) => {
+        Entities.ForEach((ref CollisionStats stats, ref LastFreePath lastFreePath, ref LastFreeTime lastFreeTime, in PrevVelocity prevVelocity) => {
             if (stats.CollidedThisFrame)
             {
-                stats.DistanceSinceLastCollision = stats.TimeSinceLastCollision*math.length(velocity.Value);
+                    // This should be the previous velocity 
+                stats.DistanceSinceLastCollision = stats.TimeSinceLastCollision*math.length(prevVelocity.Value);
 
                 lastFreePath.Value = stats.DistanceSinceLastCollision;
                 lastFreeTime.Value = stats.TimeSinceLastCollision;

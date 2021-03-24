@@ -18,7 +18,7 @@ public class DiaphragmCollisionSystem : SystemBase
 
     protected override void OnCreate()
     {
-        // Enabled = true;
+        Enabled = false;
     }
     
     protected override void OnUpdate()

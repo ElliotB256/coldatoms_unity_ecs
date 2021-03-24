@@ -18,6 +18,32 @@ public class DoubleWellTrapSystem : JobComponentSystem
     /// </summary>
     EntityQuery TrappedAtomQuery;
 
+
+    protected override void OnCreate()
+    {
+        Enabled = false;
+
+        TrappedAtomQuery = GetEntityQuery(new EntityQueryDesc
+        {
+            All = new[] {
+                    ComponentType.ReadOnly<Translation>(),
+                    ComponentType.ReadOnly<Force>(),
+                    ComponentType.ReadOnly<Trapped>()
+                }
+        }
+        );
+
+        DoubleWellTrapQuery = GetEntityQuery(new EntityQueryDesc
+        {
+            All = new[] {
+                    ComponentType.ReadOnly<Translation>(),
+                    ComponentType.ReadOnly<DoubleWellTrap>()
+                }
+        }
+        );
+    }
+
+
     struct Trap
     {
         public DoubleWellTrap DoubleWell;
@@ -98,25 +124,5 @@ public class DoubleWellTrapSystem : JobComponentSystem
         }
     }
 
-    protected override void OnCreate()
-    {
-        TrappedAtomQuery = GetEntityQuery(new EntityQueryDesc
-        {
-            All = new[] {
-                    ComponentType.ReadOnly<Translation>(),
-                    ComponentType.ReadOnly<Force>(),
-                    ComponentType.ReadOnly<Trapped>()
-                }
-        }
-        );
 
-        DoubleWellTrapQuery = GetEntityQuery(new EntityQueryDesc
-        {
-            All = new[] {
-                    ComponentType.ReadOnly<Translation>(),
-                    ComponentType.ReadOnly<DoubleWellTrap>()
-                }
-        }
-        );
-    }
 }

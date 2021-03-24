@@ -17,6 +17,8 @@ using Unity.Transforms;
 public class UpdatePositionWithWallSystem : JobComponentSystem
 {
     EntityQuery WallQuery;
+    EntityQuery AtomQuery;
+    [DeallocateOnJobCompletion] NativeArray<bool> Collided;
 
     protected override void OnCreate()
     {
@@ -29,24 +31,42 @@ public class UpdatePositionWithWallSystem : JobComponentSystem
                     ComponentType.ReadOnly<WZ2Index>()
                 }
         });
+
+        AtomQuery = GetEntityQuery(new EntityQueryDesc
+        {
+            All = new ComponentType[]  {
+                typeof(CollisionStats),
+                ComponentType.ReadOnly<Atom>()
+            }
+        });
     }
 
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
+            // Form an array for Collided particles
+        int atomNumber = AtomQuery.CalculateEntityCount();
+        Collided = new NativeArray<bool>(atomNumber, Allocator.TempJob, NativeArrayOptions.ClearMemory);
+
         float DeltaTime = FixedUpdateGroup.FIXED_TIME_DELTA;
         NativeArray<InfinitePlane> Walls = WallQuery.ToComponentDataArray<InfinitePlane>(Allocator.TempJob);
         NativeArray<WIndex> WallIndices = WallQuery.ToComponentDataArray<WIndex>(Allocator.TempJob);
         NativeArray<WZ1Index> WallZ1Indices = WallQuery.ToComponentDataArray<WZ1Index>(Allocator.TempJob);
         NativeArray<WZ2Index> WallZ2Indices = WallQuery.ToComponentDataArray<WZ2Index>(Allocator.TempJob);
 
-        return new UpdatePositionWithWallJob
+        var firstJob = new UpdatePositionWithWallJob
         {
             dT = DeltaTime,
             Walls = Walls,
             WallIndices = WallIndices,
             WallZ1Indices = WallZ1Indices,
-            WallZ2Indices = WallZ2Indices
-        }.Schedule(this, inputDependencies);        
+            WallZ2Indices = WallZ2Indices,
+            Collided = Collided
+        }.Schedule(this, inputDependencies);
+
+        return new UpdateCollisionStatsJob
+        {
+            Collided = Collided
+        }.Schedule(AtomQuery, firstJob);
     }
 
     [BurstCompile]
@@ -58,6 +78,7 @@ public class UpdatePositionWithWallSystem : JobComponentSystem
         [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<WIndex> WallIndices;
         [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<WZ1Index> WallZ1Indices;
         [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<WZ2Index> WallZ2Indices;
+        public NativeArray<bool> Collided;
 
         public void Execute(
             Entity entity,
@@ -128,6 +149,9 @@ public class UpdatePositionWithWallSystem : JobComponentSystem
 
                     wallCollisions.Impulse = Mathf.Abs(mass.Value*math.dot(velocity.Value, normal));
 
+                        // Set the particle to have collided this frame
+                    Collided[index] = true;
+
                     // instead of moving the atom away from the wall, just check that it is moving towards the wall for a collision to occur 
 
                     //move atom away from wall
@@ -158,5 +182,20 @@ public class UpdatePositionWithWallSystem : JobComponentSystem
             return distance;
         }
     }
+
+        // Job to update the collision statistics 
+    [BurstCompile]
+    struct UpdateCollisionStatsJob : IJobForEachWithEntity<CollisionStats>
+    {
+        public NativeArray<bool> Collided;
+
+        public void Execute(Entity entity, int index, ref CollisionStats stats)
+        {
+            if (Collided[index])
+                // stats.TimeSinceLastCollision = 0f;
+                stats.CollidedThisFrame = true;
+        }
+    }
+
 }
 

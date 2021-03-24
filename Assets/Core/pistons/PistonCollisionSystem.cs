@@ -19,10 +19,14 @@ using UnityEngine;
 public class PistonCollisionSystem : JobComponentSystem
 {
     EntityQuery PistonQuery;
+    EntityQuery AtomQuery;
+    [DeallocateOnJobCompletion] NativeArray<bool> Collided;
     // static float holeSize = 0.1f;
 
     protected override void OnCreate()
     {   
+
+        Enabled = true;
             // Defining the Query for the piston
         var query = new EntityQueryDesc
         {
@@ -35,29 +39,45 @@ public class PistonCollisionSystem : JobComponentSystem
             }
         };
         PistonQuery = GetEntityQuery(query);
+
+        AtomQuery = GetEntityQuery(new EntityQueryDesc
+        {
+            All = new ComponentType[]  {
+                typeof(CollisionStats),
+                ComponentType.ReadOnly<Atom>()
+            }
+        });
     }
 
         // Do I need a job Handle if I am just doing this all at once?
         // Also need to make this run only over the bins that the wall is in
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
+            // Form an array for Collided particles
+        int atomNumber = AtomQuery.CalculateEntityCount();
+        Collided = new NativeArray<bool>(atomNumber, Allocator.TempJob, NativeArrayOptions.ClearMemory);
+
         float DeltaTime = FixedUpdateGroup.FIXED_TIME_DELTA;
         NativeArray<Translation> PistonTranslation = PistonQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
         NativeArray<Velocity> PistonVelocity = PistonQuery.ToComponentDataArray<Velocity>(Allocator.TempJob);
         NativeArray<Mass> PistonMass = PistonQuery.ToComponentDataArray<Mass>(Allocator.TempJob);
         NativeArray<WIndex> PistonWIndex = PistonQuery.ToComponentDataArray<WIndex>(Allocator.TempJob);
 
-        return new UpdatePositionWithPistonJob
+        var firstJob = new UpdatePositionWithPistonJob
         {
             dT = DeltaTime,
             pistonTranslation = PistonTranslation,
             pistonVelocity = PistonVelocity,
             pistonMass = PistonMass,
-            pistonWIndex = PistonWIndex
-
+            pistonWIndex = PistonWIndex,
+            Collided = Collided
         }.Schedule(this, inputDependencies );
-            // Should I use run here to just form the array?
-                // I got an error "There is no boxing conversion from..."
+
+        return new UpdateCollisionStatsJob
+        {
+            Collided = Collided
+        }.Schedule(AtomQuery, firstJob);
+
     }
 
     
@@ -73,6 +93,7 @@ public class PistonCollisionSystem : JobComponentSystem
         [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<Velocity> pistonVelocity;
         [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<Mass> pistonMass;
         [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<WIndex> pistonWIndex;
+        public NativeArray<bool> Collided;
 
         public void Execute(
             Entity entity,
@@ -90,15 +111,11 @@ public class PistonCollisionSystem : JobComponentSystem
             {
                 return;
             }
-
-            float wallDisplacementDistance =  0.1f;
             
                 // This loop is unnecessary as I only have one piston
             for (int i = 0; i < pistonTranslation.Length; i ++) {
 
-                if (zone.Value == 0)
-                { 
-                    if (translation.Value.x > pistonTranslation[i].Value.x - radius.Value) {
+
                             // Do an effusion system rather than this
                         // if ( translation.Value.y > -holeSize && translation.Value.y < holeSize && translation.Value.z > -holeSize && translation.Value.z < holeSize)
                         // {
@@ -109,88 +126,55 @@ public class PistonCollisionSystem : JobComponentSystem
                         //     }
                         // }
                         // else {
-                            //Change these from vectors to just the scalar x value
-                        float3 CoMVelocity = (pistonMass[i].Value * pistonVelocity[i].Value + mass.Value*velocity.Value)/(pistonMass[i].Value + mass.Value);
-                        float3 particleCoMVelocity = velocity.Value - CoMVelocity;
-                        float3 pistonCoMVelocity = pistonVelocity[i].Value - CoMVelocity;
-                        
-                        // This collision model assuming the piston is an unstoppable force (infinite mass)
-                        if (math.dot(particleCoMVelocity, pistonCoMVelocity) < 0f) {
-                                // Update Impulse components
-                                    // The + 1 accounts for the Left index being 7 and right being 6
-                            wallCollisions.WallIndex = pistonWIndex[i].Value + 1;
-                            wallCollisions.Impulse = 2*mass.Value*Mathf.Abs(particleCoMVelocity.x);
+                        //    // Normal Wall Collision
 
-                            // particleCoMVelocity.x = 2*pistonCoMVelocity.x - particleCoMVelocity.x;
-                            // translation.Value.x = Pistons[i].Translation.x - wallDisplacementDistance;
-                            velocity.Value.x = 2*pistonVelocity[i].Value.x - velocity.Value.x;
-                        }
                         // }
+
+                 if (zone.Value == 0)
+                 { 
+                    if (translation.Value.x > pistonTranslation[i].Value.x - radius.Value) {
+
+                        float relVelX = velocity.Value.x - pistonVelocity[i].Value.x;
+                        
+                        if (relVelX > 0)
+                        {
+                            // Collide
+
+                            velocity.Value.x = 2*pistonVelocity[i].Value.x - velocity.Value.x;
+                            Collided[index] = true;
+                        }
                     }
                 }
-                    // remove this last or when the diaphragm is not in place
-                if (zone.Value == 1 || zone.Value == 2)
+                if (zone.Value == 1)
                 {
                     if (translation.Value.x < pistonTranslation[i].Value.x + radius.Value) {
-                        // if ( translation.Value.y > -holeSize && translation.Value.y < holeSize && translation.Value.z > -holeSize && translation.Value.z < holeSize)
-                        // {
-                        //     if (velocity.Value.x < 0)
-                        //     {
-                        //         // Effusion
-                        //     zone.Value = 0;
-                        // }
-                        // }
-                        // else {
-                        float3 CoMVelocity = (pistonMass[i].Value * pistonVelocity[i].Value + mass.Value*velocity.Value)/(pistonMass[i].Value + mass.Value);
-                        float3 particleCoMVelocity = velocity.Value - CoMVelocity;
-                        float3 pistonCoMVelocity = pistonVelocity[i].Value - CoMVelocity;
+
+                        float relVelX = velocity.Value.x - pistonVelocity[i].Value.x;
                         
-                        // This collision model assuming the piston is an unstoppable force (infinite mass)
-                        if (math.dot(particleCoMVelocity, pistonCoMVelocity) < 0f) {
+                        if (relVelX < 0)
+                        {
+                            // Collide
 
-                            wallCollisions.WallIndex = pistonWIndex[i].Value;
-                            wallCollisions.Impulse = 2*mass.Value*Mathf.Abs(particleCoMVelocity.x);
-
-                            // particleCoMVelocity.x = 2*pistonCoMVelocity.x - particleCoMVelocity.x;
-                            // translation.Value.x = Pistons[i].Translation.x - wallDisplacementDistance;
                             velocity.Value.x = 2*pistonVelocity[i].Value.x - velocity.Value.x;
+                            Collided[index] = true;
                         }
                     }
-                    // }
                 }
-
-
-
-
-
-                // This doesn't work and I don't know why.
-                //  if (zone.Value == 0)
-                //  { 
-                //     if (translation.Value.x > pistonTranslation[i].Value.x) {
-
-                //         //translation.Value.x = pistonTranslation[i].Value.x - wallDisplacementDistance;
-
-                //             // Check the particle is moving towards the wall
-                //                 // Change this to check that the sign of the x component is opposite
-                                    // Can just check that the com particle velocity is positive
-                //         if (math.dot(velocity.Value - pistonVelocity[i].Value, pistonVelocity[i].Value) < 0f) {
-                //                 // This collision model assuming the piston is an unstoppable force (infinite mass)
-                //             velocity.Value.x = 2*pistonVelocity[i].Value.x - velocity.Value.x;
-                //         }
-                //     }
-                // }
-                // if (zone.Value == 1)
-                // {
-                //     if (translation.Value.x < pistonTranslation[i].Value.x) {
-                        
-                //         //translation.Value.x = pistonTranslation[i].Value.x - wallDisplacementDistance;
-                //             // Check that they are moving towards each other in the Piston Frame
-                //         if (math.dot(velocity.Value - pistonVelocity[i].Value, pistonVelocity[i].Value) < 0f) {
-                //             velocity.Value.x = 2*pistonVelocity[i].Value.x - velocity.Value.x;
-                //         }
-                //     }
-                // }
             }
+        }
+    }
+
+            // Job to update the collision statistics 
+    [BurstCompile]
+    struct UpdateCollisionStatsJob : IJobForEachWithEntity<CollisionStats>
+    {
+        public NativeArray<bool> Collided;
+
+        public void Execute(Entity entity, int index, ref CollisionStats stats)
+        {
+            if (Collided[index])
+                // stats.TimeSinceLastCollision = 0f;
+                stats.CollidedThisFrame = true;
         }
     }
 }   

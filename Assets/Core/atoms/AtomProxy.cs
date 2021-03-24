@@ -12,6 +12,7 @@ public class AtomProxy : MonoBehaviour, IConvertGameObjectToEntity
     {
         dstManager.AddComponentData(entity, new Mass { Value = Mass });
         dstManager.AddComponentData(entity, new Velocity());
+        dstManager.AddComponentData(entity, new PrevVelocity());
         dstManager.AddComponentData(entity, new Force());
         dstManager.AddComponentData(entity, new PrevForce());
         dstManager.AddComponentData(entity, new TotalEnergy());
@@ -19,7 +20,7 @@ public class AtomProxy : MonoBehaviour, IConvertGameObjectToEntity
         dstManager.AddComponentData(entity, new KineticEnergy());
         dstManager.AddComponentData(entity, new CollisionRadius { Value = ScatteringRadius });
         dstManager.AddComponentData(entity, new Trapped());
-        dstManager.AddComponentData(entity, new CollisionStats { TimeSinceLastCollision = 10f , DistanceSinceLastCollision = 0f, CollidedThisFrame = false});
+        dstManager.AddComponentData(entity, new CollisionStats { TimeSinceLastCollision = 0f , DistanceSinceLastCollision = 0f, CollidedThisFrame = false});
         dstManager.AddComponentData(entity, new ShaderCollisionTime { Value = 100f });
         dstManager.AddComponentData(entity, new Atom());
             // Setting the Zone to -1 means that it is only changed once at the start

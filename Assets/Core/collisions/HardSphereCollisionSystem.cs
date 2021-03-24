@@ -240,7 +240,7 @@ public class HardSphereCollisionSystem : JobComponentSystem
 
                         Collided[a] = true;
                         Collided[b] = true;
-                 }
+                    }
                 }
             }
         }

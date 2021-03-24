@@ -10,6 +10,8 @@ public class StatisticsProxy : MonoBehaviour, IConvertGameObjectToEntity
         dstManager.AddComponentData(entity, new Statistics());
         dstManager.AddComponentData(entity, new MeanFreePath { Value = 0f });
         dstManager.AddComponentData(entity, new MeanCollisionTime { Value = 0f});
+        dstManager.AddComponentData(entity, new TotalInternalEnergy { Value = 0f});
+        dstManager.AddComponentData(entity, new Number { Value = 0});
 
         DynamicBuffer<BufferElementPressure> dynamicBuffer = dstManager.AddBuffer<BufferElementPressure>(entity);
         
