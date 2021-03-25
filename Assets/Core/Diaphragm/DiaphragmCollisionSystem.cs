@@ -18,7 +18,7 @@ public class DiaphragmCollisionSystem : SystemBase
 
     protected override void OnCreate()
     {
-        Enabled = false;
+        // Enabled = false;
     }
     
     protected override void OnUpdate()
@@ -30,7 +30,7 @@ public class DiaphragmCollisionSystem : SystemBase
         Entity tempEntity = Entity.Null;
         Entities.WithAll<Diaphragm>().ForEach((Entity entity)=> {
             tempEntity = entity;
-        }).Run();
+        }).WithoutBurst().Run();
 
         // Make a native list of all the relevant components
             // Change this to just getting the single entity rather than the array then choosing the entity

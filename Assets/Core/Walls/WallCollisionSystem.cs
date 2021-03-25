@@ -18,7 +18,9 @@ public class UpdatePositionWithWallSystem : JobComponentSystem
 {
     EntityQuery WallQuery;
     EntityQuery AtomQuery;
-    [DeallocateOnJobCompletion] NativeArray<bool> Collided;
+        // Don't actually know what this does but it seems to fix the issue
+    [NativeDisableParallelForRestriction] NativeArray<bool> Collided;
+
 
     protected override void OnCreate()
     {
@@ -63,10 +65,14 @@ public class UpdatePositionWithWallSystem : JobComponentSystem
             Collided = Collided
         }.Schedule(this, inputDependencies);
 
-        return new UpdateCollisionStatsJob
+        var secondJob =  new UpdateCollisionStatsJob
         {
             Collided = Collided
         }.Schedule(AtomQuery, firstJob);
+
+        Collided.Dispose(secondJob);
+
+        return secondJob;
     }
 
     [BurstCompile]

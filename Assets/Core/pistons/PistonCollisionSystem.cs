@@ -20,7 +20,7 @@ public class PistonCollisionSystem : JobComponentSystem
 {
     EntityQuery PistonQuery;
     EntityQuery AtomQuery;
-    [DeallocateOnJobCompletion] NativeArray<bool> Collided;
+    [NativeDisableParallelForRestriction] NativeArray<bool> Collided;
     // static float holeSize = 0.1f;
 
     protected override void OnCreate()
@@ -33,7 +33,6 @@ public class PistonCollisionSystem : JobComponentSystem
             All = new ComponentType[] {
                 typeof(Translation),
                 ComponentType.ReadOnly<Velocity>(),
-                ComponentType.ReadOnly<Mass>(),
                 ComponentType.ReadOnly<Piston>(),
                 ComponentType.ReadOnly<WIndex>()
             }
@@ -60,7 +59,6 @@ public class PistonCollisionSystem : JobComponentSystem
         float DeltaTime = FixedUpdateGroup.FIXED_TIME_DELTA;
         NativeArray<Translation> PistonTranslation = PistonQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
         NativeArray<Velocity> PistonVelocity = PistonQuery.ToComponentDataArray<Velocity>(Allocator.TempJob);
-        NativeArray<Mass> PistonMass = PistonQuery.ToComponentDataArray<Mass>(Allocator.TempJob);
         NativeArray<WIndex> PistonWIndex = PistonQuery.ToComponentDataArray<WIndex>(Allocator.TempJob);
 
         var firstJob = new UpdatePositionWithPistonJob
@@ -68,16 +66,18 @@ public class PistonCollisionSystem : JobComponentSystem
             dT = DeltaTime,
             pistonTranslation = PistonTranslation,
             pistonVelocity = PistonVelocity,
-            pistonMass = PistonMass,
             pistonWIndex = PistonWIndex,
             Collided = Collided
         }.Schedule(this, inputDependencies );
 
-        return new UpdateCollisionStatsJob
+        var secondJob = new UpdateCollisionStatsJob
         {
             Collided = Collided
         }.Schedule(AtomQuery, firstJob);
 
+        Collided.Dispose(secondJob);
+
+        return secondJob;
     }
 
     
@@ -91,7 +91,6 @@ public class PistonCollisionSystem : JobComponentSystem
         public float dT;
         [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<Translation> pistonTranslation;
         [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<Velocity> pistonVelocity;
-        [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<Mass> pistonMass;
         [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<WIndex> pistonWIndex;
         public NativeArray<bool> Collided;
 
@@ -140,6 +139,9 @@ public class PistonCollisionSystem : JobComponentSystem
                         {
                             // Collide
 
+                            wallCollisions.WallIndex = pistonWIndex[i].Value + 1;
+                            wallCollisions.Impulse = 2*mass.Value*Mathf.Abs(relVelX);
+
                             velocity.Value.x = 2*pistonVelocity[i].Value.x - velocity.Value.x;
                             Collided[index] = true;
                         }
@@ -154,6 +156,9 @@ public class PistonCollisionSystem : JobComponentSystem
                         if (relVelX < 0)
                         {
                             // Collide
+
+                            wallCollisions.WallIndex = pistonWIndex[i].Value;
+                            wallCollisions.Impulse = 2*mass.Value*Mathf.Abs(relVelX);
 
                             velocity.Value.x = 2*pistonVelocity[i].Value.x - velocity.Value.x;
                             Collided[index] = true;

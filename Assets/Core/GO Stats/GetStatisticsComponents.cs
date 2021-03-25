@@ -27,20 +27,10 @@ public class GetStatisticsComponents : MonoBehaviour
                 ComponentType.ReadOnly<Statistics>()
             }
         };
-        
-        // StatisticsQuery = manager.CreateEntityQuery(StatisticsQueryDesc);
-        // statisticsEntity = StatisticsQuery.GetSingletonEntity();
-        // Debug.Log(manager.GetComponentData<MeanFreePath>(statisticsEntity).Value);
     }
 
     private void LateUpdate()
     {
-
-        // Debug.Log(manager.GetComponentData<MeanFreePath>(statisticsEntity).Value);
-
-        // StatsScript.mfp += 1f;
-        // Debug.Log(StatsScript.mfp);
-
             // This logic may cause the first frame of data to be dropped
         if (statisticsEntity == Entity.Null) 
         {
@@ -48,12 +38,9 @@ public class GetStatisticsComponents : MonoBehaviour
             statisticsEntity = StatisticsQuery.GetSingletonEntity();
 
             PullPushData();
-            
-
         } else 
         {
             PullPushData();
-            
         }
     }
 

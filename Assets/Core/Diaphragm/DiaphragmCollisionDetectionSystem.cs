@@ -18,7 +18,7 @@ public class DiaphragmCollisionDetectionSystem : JobComponentSystem
 
     protected override void OnCreate()
     {
-        Enabled = false;
+        // Enabled = false;
 
         var diaphragmQueryDesc = new EntityQueryDesc
         {
@@ -47,14 +47,15 @@ public class DiaphragmCollisionDetectionSystem : JobComponentSystem
 
             // I can't use the same logic as DiaphragmCollisionSystem to get the diaphragm components as that needs to be .Run() to get the entity reference 
                 // Surely there is an easier and better way that this?
+                    // Get singleton and getComponentData
         NativeArray<Translation> DiaphragmTranslation = DiaphragmQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
         NativeArray<Velocity> DiaphragmVelocity = DiaphragmQuery.ToComponentDataArray<Velocity>(Allocator.TempJob);
         NativeArray<Mass> DiaphragmMass = DiaphragmQuery.ToComponentDataArray<Mass>(Allocator.TempJob);
 
         NativeArray<Translation> PistonList = PistonQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
-        // int PistonListLength = PistonList.Length()
+        int PistonListLength = PistonList.Length;
 
-        return Entities
+        var firstJob = Entities
             .WithAll<Atom>()
             .ForEach(
                 (ref DiaphragmColliding diaphragmColliding,
@@ -68,7 +69,7 @@ public class DiaphragmCollisionDetectionSystem : JobComponentSystem
                 {
                     if (DiaphragmTranslation.Length > 0) {
                     // If inbetween the Piston and the Diaphragm
-                    if (zone.Value == PistonList.Length)
+                    if (zone.Value == PistonListLength)
                     {
                         if (translation.Value.x > DiaphragmTranslation[0].Value.x - collisionRadius.Value) {
 
@@ -85,7 +86,7 @@ public class DiaphragmCollisionDetectionSystem : JobComponentSystem
                                 wallCollisions.Impulse = 2*mass.Value * Mathf.Abs(particleCoMVelocity.x);
                             }
                         }
-                    } else if (zone.Value == PistonList.Length + 1)
+                    } else if (zone.Value == PistonListLength + 1)
                     {
                         // if inbetween the diaphragm and the right hand wall
                         if (translation.Value.x < DiaphragmTranslation[0].Value.x + collisionRadius.Value) {
@@ -102,6 +103,13 @@ public class DiaphragmCollisionDetectionSystem : JobComponentSystem
                     }   
                     }
                 }).Schedule(inputDependencies);
+        
+        DiaphragmTranslation.Dispose(firstJob);
+        DiaphragmVelocity.Dispose(firstJob);
+        DiaphragmMass.Dispose(firstJob);
+        PistonList.Dispose(firstJob);
+
+        return firstJob;
     }
 }
 

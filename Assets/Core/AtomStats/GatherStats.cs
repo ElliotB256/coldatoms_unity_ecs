@@ -4,6 +4,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
+using UnityEngine;
 
 
 namespace Calculation {
@@ -19,7 +20,7 @@ public class GatherStats : SystemBase
 
     protected override void OnCreate()
     {
-        // Enabled = true;
+        // Enabled = true;  
     }
 
     protected override void OnUpdate()
@@ -30,7 +31,7 @@ public class GatherStats : SystemBase
         ctTemp = 0f;
         number = 0f;
         totalInternalEnergy = 0f;
-
+        
             // Gather statistical componetns 
         Entities.WithAll<Atom>().ForEach((in LastFreeTime lastFreeTime, in LastFreePath lastFreePath, in TotalEnergy totEnergy) => {
             fpTemp += lastFreePath.Value;
