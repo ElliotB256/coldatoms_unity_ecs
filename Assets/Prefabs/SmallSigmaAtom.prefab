@@ -60,7 +60,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c41f98b6d424104e8b457220006083d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Mass: 0.2
+  Mass: 0.1
   ScatteringRadius: 0.1
 --- !u!33 &236813164195317978
 MeshFilter:

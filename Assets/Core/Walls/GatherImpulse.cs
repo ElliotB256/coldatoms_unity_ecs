@@ -26,6 +26,9 @@ public class GatherImpulse : SystemBase
     public float L = 20;
     float xP;
     float xD;
+    public float V0 = 0;
+    public float V1 = 0;
+    public float V2 = 0;
 
     public EntityManager manager;
 
@@ -84,20 +87,6 @@ public class GatherImpulse : SystemBase
         }
 
 
-
-
-
-
-
-        // NativeArray<Translation> DiaphragmTranslation = DiaphragmQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
-        // NativeArray<Translation> PistonTranslation = PistonQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
-        // float xD = DiaphragmTranslation[0].Value.x;
-        // float xP = PistonTranslation[0].Value.x;
-
-        // int PistonNumber = PistonTranslation.Length;
-        // int DiaphragmNumber = DiaphragmTranslation.Length;
-
-
         dT = UnityEngine.Time.deltaTime;
 
             // Is there an easier way to reset the array?
@@ -131,9 +120,13 @@ public class GatherImpulse : SystemBase
             // Both piston and Diaphragm exist
         if (PistonExists && DiaphragmExists) //PistonNumber == 1 && DiaphragmNumber == 1)//manager.Exists(pistonEntity) && manager.Exists(diaphragmEntity))
         {
-            float z0Dim = xP;
-            float z1Dim = xD - xP;
-            float z2Dim = L - xD;
+            float z0Dim = Mathf.Abs(-L/2 - xP);
+            float z1Dim = Mathf.Abs(xD - xP);
+            float z2Dim = Mathf.Abs(L/2 - xD);
+
+            V0 = L*L*z0Dim;
+            V1 = L*L*z1Dim;
+            V2 = L*L*z2Dim;
 
                 // Z0 Surfaces
             Entities.ForEach((ref Pressure pressure, in WIndex wallIndex) => {
@@ -183,8 +176,11 @@ public class GatherImpulse : SystemBase
             // Only piston
         else if (PistonExists && !DiaphragmExists) //PistonNumber == 1 && DiaphragmNumber == 0) //manager.Exists(pistonEntity) && !(manager.Exists(diaphragmEntity)))
         {
-            float z0Dim = xP;
-            float z1Dim = L - xP;
+            float z0Dim = Mathf.Abs(-L/2 - xP);
+            float z1Dim = Mathf.Abs(L/2 - xP);
+
+            V0 = L*L*z0Dim;
+            V1 = L*L*z1Dim;
 
                 // Z0 Surfaces
             Entities.ForEach((ref Pressure pressure, in WIndex wallIndex) => {
@@ -220,8 +216,11 @@ public class GatherImpulse : SystemBase
         else if (!PistonExists && DiaphragmExists) //PistonNumber == 0 && DiaphragmNumber == 1) //!(manager.Exists(pistonEntity)) && manager.Exists(diaphragmEntity))
         {
                 // Z0 and Z1 exist
-            float z0Dim = xD;
-            float z1Dim = L - xD;
+            float z0Dim = Mathf.Abs(-L/2 - xD);
+            float z1Dim = Mathf.Abs(L/2 - xD);
+
+            V0 = L*L*z0Dim;
+            V1 = L*L*z1Dim;
             
                 // Z0 Surfaces
             Entities.ForEach((ref Pressure pressure, in WIndex wallIndex) => {
@@ -258,19 +257,23 @@ public class GatherImpulse : SystemBase
         {
                 // only Z0 exists 
             float z0Dim = L;
+
+            V0 = L*L*z0Dim;
+            
                     // This loop is over all Z0 6 walls and the right side of the piston and diaphragm
             Entities.ForEach((ref Pressure pressure, in WIndex wallIndex) => {
                 pressure.Value = totalImpulse[wallIndex.Value]/(dT*L*z0Dim);
             }).WithoutBurst().Run();   
         }
 
+        Entities.WithAll<Statistics>().ForEach((ref Z0Volume VZ0, ref Z1Volume VZ1, ref Z2Volume VZ2, ref TotalVolume V) => {
+            VZ0.Value = V0;
+            VZ1.Value = V1;
+            VZ2.Value = V2;
+            V.Value = V0 + V1 + V2;
+        }).WithoutBurst().Run();
+
         totalImpulse.Dispose();
-        // DiaphragmTranslation.Dispose();
-        // PistonTranslation.Dispose();
-
-
-
-
 
         //     // This loop is over all 6 walls and the right side of the piston and diaphragm
         // Entities.ForEach((ref Pressure pressure, in WIndex wallIndex) => {

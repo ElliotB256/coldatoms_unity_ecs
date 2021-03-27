@@ -342,6 +342,10 @@ MonoBehaviour:
   mct: 0
   totIntEnergy: 0
   N: 0
+  V: 0
+  V0: 0
+  V1: 0
+  V2: 0
   pressures:
   - 0
   - 0
@@ -363,6 +367,8 @@ MonoBehaviour:
   - 0
   - 0
   - 0
+  currentTime: 0
+  dT: 0
 --- !u!224 &516540151
 RectTransform:
   m_ObjectHideFlags: 0

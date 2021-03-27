@@ -15,8 +15,22 @@ public class GatherStats : SystemBase
     float fpTemp = 0f;
     float ctTemp = 0f;
     float number = 0f;
+    float Z0Number = 0f;
+    float Z1Number = 0f;
+    float Z2Number = 0f;
+
     float totalInternalEnergy = 0f;
+    float Z0Energy = 0f;
+    float Z1Energy = 0f;
+    float Z2Energy = 0f;
+
+    float T0 = 0f;
+    float T1 = 0f;
+    float T2 = 0f;
+
     float[] wallPressures = new float[20];
+
+    const float kB = 1.3807e-16f;
 
     protected override void OnCreate()
     {
@@ -29,15 +43,39 @@ public class GatherStats : SystemBase
             // Do I need to reset these on update?
         fpTemp = 0f;
         ctTemp = 0f;
+
         number = 0f;
+        Z0Number = 0f;
+        Z1Number = 0f;
+        Z2Number = 0f;
+
         totalInternalEnergy = 0f;
+        Z0Energy = 0f;
+        Z1Energy = 0f;
+        Z2Energy = 0f;
         
             // Gather statistical componetns 
-        Entities.WithAll<Atom>().ForEach((in LastFreeTime lastFreeTime, in LastFreePath lastFreePath, in TotalEnergy totEnergy) => {
+        Entities.WithAll<Atom>().ForEach((in LastFreeTime lastFreeTime, in LastFreePath lastFreePath, in TotalEnergy totEnergy, in Zone zone) => {
             fpTemp += lastFreePath.Value;
             ctTemp += lastFreeTime.Value;
             totalInternalEnergy += totEnergy.Value;
             number += 1f;
+            if (zone.Value == 0)
+            {
+                Z0Number += 1f;
+                Z0Energy += totEnergy.Value;
+            }
+            else if (zone.Value == 1)
+            {
+                Z1Number += 1f;
+                Z1Energy += totEnergy.Value;
+            }
+            else if (zone.Value == 2)
+            {
+                Z2Number += 1f;
+                Z2Energy += totEnergy.Value;
+            }
+
         }).WithoutBurst().Run();
 
             // limit of 6 inputs
@@ -61,12 +99,38 @@ public class GatherStats : SystemBase
 
         
             // Set the component values
-        Entities.WithAll<Statistics>().ForEach((ref MeanFreePath mfp, ref MeanCollisionTime mct, ref TotalInternalEnergy TotalInternalEnergy, ref Number N) => {
+        Entities.WithAll<Statistics>().ForEach((ref MeanFreePath mfp, ref MeanCollisionTime mct, ref Number N, ref NZ0 nZ0, ref NZ1 nZ1, ref NZ2 nZ2) => {
             mfp.Value = fpTemp/number;
             mct.Value = ctTemp/number;
-            TotalInternalEnergy.Value = totalInternalEnergy;
+            
             N.Value = (int)number;
+            nZ0.Value = (int)Z0Number;
+            nZ1.Value = (int)Z1Number;
+            nZ2.Value = (int)Z2Number;
+
         }).WithoutBurst().Run();
+
+            // Another loop to set energy values
+        Entities.WithAll<Statistics>().ForEach((ref TotalInternalEnergy U, ref UZ0 uZ0, ref UZ1 uZ1, ref UZ2 uZ2) => {
+            U.Value = totalInternalEnergy;
+            uZ0.Value = Z0Energy;
+            uZ1.Value = Z1Energy;
+            uZ2.Value = Z2Energy;
+
+        }).WithoutBurst().Run();
+
+        Entities.WithAll<Statistics>().ForEach((in NZ0 nZ0, in NZ1 nZ1, in NZ2 nZ2, in UZ0 uZ0, in UZ1 uZ1, in UZ2 uZ2) => {
+            T0 = uZ0.Value/(3*nZ0.Value*kB);
+            T1 = uZ1.Value/(3*nZ1.Value*kB);
+            T2 = uZ2.Value/(3*nZ2.Value*kB);
+        }).WithoutBurst().Run();
+
+        Entities.WithAll<Statistics>().ForEach((ref TZ0 tZ0, ref TZ1 tZ1, ref TZ2 tZ2) => {
+            tZ0.Value = T0;
+            tZ1.Value = T1;
+            tZ2.Value = T2;
+        }).WithoutBurst().Run();
+        
 
 
 
