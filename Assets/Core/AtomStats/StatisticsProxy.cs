@@ -5,6 +5,9 @@ using UnityEngine;
 [RequiresEntityConversion]
 public class StatisticsProxy : MonoBehaviour, IConvertGameObjectToEntity
 {
+    // [SerializeField]
+    // private float MaxOscillationsNumber = 9.5f;
+
     public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
         dstManager.AddComponentData(entity, new Statistics());
@@ -30,6 +33,8 @@ public class StatisticsProxy : MonoBehaviour, IConvertGameObjectToEntity
         dstManager.AddComponentData(entity, new TZ0 { Value = 0});
         dstManager.AddComponentData(entity, new TZ1 { Value = 0});
         dstManager.AddComponentData(entity, new TZ2 { Value = 0});
+
+        dstManager.AddComponentData(entity, new Oscillations { CurrentOscillation = 0f, MaxOscillations = 0f});
 
         
 

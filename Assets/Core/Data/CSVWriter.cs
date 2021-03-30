@@ -37,7 +37,9 @@ public class CSVWriter : MonoBehaviour
     float Time;
     float dT;
 
-
+    float relaxationTime = 20f;
+    float oscEndTime;
+    bool oscEnded = false;
     
 
     void Awake()
@@ -69,10 +71,26 @@ public class CSVWriter : MonoBehaviour
     void LateUpdate()
     {
         frame ++;
+        if (StatsScript.OscillationNumber <= StatsScript.MaxOscillations)
+        {
+            PullData();
+            WriteCSV();
 
-        PullData();
-        WriteCSV();
-
+        }
+        else if (StatsScript.OscillationNumber > StatsScript.MaxOscillations)
+        {
+                // The frame that the oscillations end, grab that time 
+            if (!oscEnded)
+            {
+                oscEndTime = StatsScript.currentTime;
+                oscEnded = true;
+            }
+            if (StatsScript.currentTime < oscEndTime + relaxationTime)
+            {
+                PullData();
+                WriteCSV();
+            }
+        }
     }
 
     public void PullData()

@@ -153,7 +153,7 @@ public class UpdatePositionWithWallSystem : JobComponentSystem
                         wallCollisions.WallIndex = WallZ2Indices[wallIndex].Value;
                     }
 
-                    wallCollisions.Impulse = Mathf.Abs(mass.Value*math.dot(velocity.Value, normal));
+                    wallCollisions.Impulse = 2*Mathf.Abs(mass.Value*math.dot(velocity.Value, normal));
 
                         // Set the particle to have collided this frame
                     Collided[index] = true;

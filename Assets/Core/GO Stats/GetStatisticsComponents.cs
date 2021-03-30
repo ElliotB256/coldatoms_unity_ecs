@@ -69,6 +69,8 @@ public class GetStatisticsComponents : MonoBehaviour
         TZ1 ET1 = manager.GetComponentData<TZ1>(statisticsEntity);
         TZ2 ET2 = manager.GetComponentData<TZ2>(statisticsEntity);
 
+        Oscillations EOsc = manager.GetComponentData<Oscillations>(statisticsEntity);
+
 
         DynamicBuffer<BufferElementPressure> EPressure = manager.GetBuffer<BufferElementPressure>(statisticsEntity);
  
@@ -97,6 +99,9 @@ public class GetStatisticsComponents : MonoBehaviour
 
         StatsScript.currentTime = UnityEngine.Time.time;
         StatsScript.dT = UnityEngine.Time.deltaTime;
+
+        StatsScript.OscillationNumber = EOsc.CurrentOscillation;
+        StatsScript.MaxOscillations = EOsc.MaxOscillations;
 
         for (int i = 0; i < EPressure.Length; i++)
         {

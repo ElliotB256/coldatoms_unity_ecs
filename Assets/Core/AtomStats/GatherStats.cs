@@ -28,6 +28,9 @@ public class GatherStats : SystemBase
     float T1 = 0f;
     float T2 = 0f;
 
+    float currentOsc = 0f;
+    float maxOsc = 0f;
+
     float[] wallPressures = new float[20];
 
     const float kB = 1.3807e-16f;
@@ -97,7 +100,13 @@ public class GatherStats : SystemBase
         }).WithoutBurst().Run();
 
 
+            // Gather oscillation data for compression runs
+        Entities.WithAll<Piston>().ForEach((in Oscillations osc) => {
+            currentOsc = osc.CurrentOscillation;
+            maxOsc = osc.MaxOscillations;
+        }).WithoutBurst().Run();
         
+
             // Set the component values
         Entities.WithAll<Statistics>().ForEach((ref MeanFreePath mfp, ref MeanCollisionTime mct, ref Number N, ref NZ0 nZ0, ref NZ1 nZ1, ref NZ2 nZ2) => {
             mfp.Value = fpTemp/number;
@@ -120,9 +129,9 @@ public class GatherStats : SystemBase
         }).WithoutBurst().Run();
 
         Entities.WithAll<Statistics>().ForEach((in NZ0 nZ0, in NZ1 nZ1, in NZ2 nZ2, in UZ0 uZ0, in UZ1 uZ1, in UZ2 uZ2) => {
-            T0 = uZ0.Value/(3*nZ0.Value*kB);
-            T1 = uZ1.Value/(3*nZ1.Value*kB);
-            T2 = uZ2.Value/(3*nZ2.Value*kB);
+            T0 = 2*uZ0.Value/(3*nZ0.Value*kB);
+            T1 = 2*uZ1.Value/(3*nZ1.Value*kB);
+            T2 = 2*uZ2.Value/(3*nZ2.Value*kB);
         }).WithoutBurst().Run();
 
         Entities.WithAll<Statistics>().ForEach((ref TZ0 tZ0, ref TZ1 tZ1, ref TZ2 tZ2) => {
@@ -131,7 +140,10 @@ public class GatherStats : SystemBase
             tZ2.Value = T2;
         }).WithoutBurst().Run();
         
-
+        Entities.WithAll<Statistics>().ForEach((ref Oscillations osc) => {
+            osc.CurrentOscillation = currentOsc;
+            osc.MaxOscillations = maxOsc;
+        }).WithoutBurst().Run();
 
 
         Entities.WithAll<Statistics>().ForEach((DynamicBuffer<BufferElementPressure> dynamicBuffer) => {

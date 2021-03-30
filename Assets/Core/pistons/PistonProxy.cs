@@ -16,6 +16,9 @@ public class PistonProxy : MonoBehaviour, IConvertGameObjectToEntity
         // Currently using CoM to ensure the velocity check works
     [SerializeField]
     private float mass = 1000000f;
+
+    [SerializeField]
+    private float MaxOscillationsNumber = 9.5f;
     
     [SerializeField]
     private int index = -1;
@@ -34,5 +37,6 @@ public class PistonProxy : MonoBehaviour, IConvertGameObjectToEntity
         dstManager.AddComponentData(entity, new WIndexLeft { Value = indexLeft});
         dstManager.AddComponentData(entity, new Pressure {Value = 0});
         dstManager.AddComponentData(entity, new PressureLeft { Value = 0});
+        dstManager.AddComponentData(entity, new Oscillations { CurrentOscillation = -1f, MaxOscillations = MaxOscillationsNumber});
     }
 }

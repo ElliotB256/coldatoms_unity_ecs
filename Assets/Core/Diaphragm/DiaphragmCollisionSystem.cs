@@ -4,7 +4,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Transforms;
 using Unity.Mathematics;
-using UnityEngine;
+// using UnityEngine;
 
 /// <summary>
 /// Collides particles that have been tagged to collide with the Diaphragm
@@ -23,7 +23,7 @@ public class DiaphragmCollisionSystem : SystemBase
     
     protected override void OnUpdate()
     {
-        float DeltaTime = FixedUpdateGroup.FIXED_TIME_DELTA;
+        // float DeltaTime = FixedUpdateGroup.FIXED_TIME_DELTA;
         
             // Grabbing the diahragm entity
                 // Is there an easier way to do this? Reference the entityManager?

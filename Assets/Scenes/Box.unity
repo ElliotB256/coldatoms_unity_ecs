@@ -341,11 +341,20 @@ MonoBehaviour:
   mfp: 0
   mct: 0
   totIntEnergy: 0
+  U0: 0
+  U1: 0
+  U2: 0
   N: 0
+  N0: 0
+  N1: 0
+  N2: 0
   V: 0
   V0: 0
   V1: 0
   V2: 0
+  T0: 0
+  T1: 0
+  T2: 0
   pressures:
   - 0
   - 0
@@ -369,6 +378,8 @@ MonoBehaviour:
   - 0
   currentTime: 0
   dT: 0
+  OscillationNumber: 0
+  MaxOscillations: 0
 --- !u!224 &516540151
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1941,7 +1952,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!33 &1874955627
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -2412,8 +2423,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f8ce4cac39b52bf42ab596f216e08081, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  initialVelocity: {x: 1, y: 0, z: 0}
+  initialVelocity: {x: 0.25, y: 0, z: 0}
   mass: 1000000
+  MaxOscillationsNumber: 9.5
   index: 6
   indexLeft: 7
 --- !u!4 &2106042395
@@ -2424,7 +2436,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2106042393}
   m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: -9.9, y: 0, z: 0}
+  m_LocalPosition: {x: -9.99, y: 0, z: 0}
   m_LocalScale: {x: 20.4, y: 0.1, z: 20}
   m_Children: []
   m_Father: {fileID: 0}
@@ -2562,7 +2574,7 @@ PrefabInstance:
     - target: {fileID: 300678547490408539, guid: 4ae7daed50119b74ba2f04a30ddc71b5,
         type: 3}
       propertyPath: Number
-      value: 30000
+      value: 50000
       objectReference: {fileID: 0}
     - target: {fileID: 300678547490408539, guid: 4ae7daed50119b74ba2f04a30ddc71b5,
         type: 3}

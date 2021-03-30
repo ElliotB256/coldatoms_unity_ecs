@@ -31,4 +31,7 @@ public class Stats : MonoBehaviour
     public float currentTime = 0f;
     public float dT = 0f;
 
+    public float OscillationNumber = 0f;
+    public float MaxOscillations = 0f;
+
 }
