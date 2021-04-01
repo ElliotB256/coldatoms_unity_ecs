@@ -19,6 +19,8 @@ public class PistonProxy : MonoBehaviour, IConvertGameObjectToEntity
 
     [SerializeField]
     private float MaxOscillationsNumber = 9.5f;
+    [SerializeField]
+    private float MaxDistance = 2f;
     
     [SerializeField]
     private int index = -1;
@@ -38,5 +40,6 @@ public class PistonProxy : MonoBehaviour, IConvertGameObjectToEntity
         dstManager.AddComponentData(entity, new Pressure {Value = 0});
         dstManager.AddComponentData(entity, new PressureLeft { Value = 0});
         dstManager.AddComponentData(entity, new Oscillations { CurrentOscillation = -1f, MaxOscillations = MaxOscillationsNumber});
+        dstManager.AddComponentData(entity, new MaxDistance {Value = MaxDistance });
     }
 }

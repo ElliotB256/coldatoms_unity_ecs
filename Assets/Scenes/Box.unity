@@ -2423,9 +2423,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f8ce4cac39b52bf42ab596f216e08081, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  initialVelocity: {x: 0.25, y: 0, z: 0}
+  initialVelocity: {x: 0.02, y: 0, z: 0}
   mass: 1000000
   MaxOscillationsNumber: 9.5
+  MaxDistance: 1
   index: 6
   indexLeft: 7
 --- !u!4 &2106042395

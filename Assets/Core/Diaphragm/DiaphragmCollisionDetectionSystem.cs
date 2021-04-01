@@ -43,8 +43,6 @@ public class DiaphragmCollisionDetectionSystem : JobComponentSystem
 
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
-        float DeltaTime = FixedUpdateGroup.FIXED_TIME_DELTA;
-
             // I can't use the same logic as DiaphragmCollisionSystem to get the diaphragm components as that needs to be .Run() to get the entity reference 
                 // Surely there is an easier and better way that this?
                     // Get singleton and getComponentData

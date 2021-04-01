@@ -24,14 +24,18 @@ public class UpdatePistonPositionSystem : SystemBase
     protected override void OnUpdate()
     {
         float DeltaTime = FixedUpdateGroup.FIXED_TIME_DELTA;
+        // Not sure if this is slowing dit down?
         float CurrentTime = (float)Time.ElapsedTime;
         
         Entities.WithAll<Piston>().ForEach(
-            (ref Translation translation, ref Velocity velocity, ref Oscillations oscillations) => {
+            (ref Translation translation, ref Velocity velocity, ref Oscillations oscillations, in MaxDistance maxDist) => {
                 
                 if (oscillations.CurrentOscillation == -1f) {
                     if (holdVel)
                     {
+                        // Hold the velocity
+                        // set the velocity to 0 to ensure collisions are correct.
+                            // Otherwise this will be a source of heating 
                         initialXVel = velocity.Value.x;
                         velocity.Value.x = 0f;
                         holdVel = false;
@@ -46,7 +50,7 @@ public class UpdatePistonPositionSystem : SystemBase
                         // Bouncing the Piston back and forth to prevent 0 volume conditions
                         // Maybe have this in another system
                         translation.Value += velocity.Value * DeltaTime;
-                    if (translation.Value.x < -9.999f || translation.Value.x > 0f)
+                    if (translation.Value.x < -9.999f || translation.Value.x > -10f + maxDist.Value)
                     {
                         velocity.Value *= -1;
                         oscillations.CurrentOscillation += 0.5f;
