@@ -43,7 +43,7 @@ public class GatherImpulse : SystemBase
     
     protected override void OnCreate()
     {
-        // Enabled = true;
+        // Enabled = false;
         
         PistonQuery = GetEntityQuery(new EntityQueryDesc
         {

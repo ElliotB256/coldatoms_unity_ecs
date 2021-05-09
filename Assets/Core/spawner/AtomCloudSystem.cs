@@ -13,6 +13,8 @@ public class AtomCloudSystem : JobComponentSystem
 {
     BeginInitializationEntityCommandBufferSystem m_EntityCommandBufferSystem;
 
+    static bool spawnSpecial = false;
+
     protected override void OnCreate()
     {
         m_EntityCommandBufferSystem = World.GetOrCreateSystem<BeginInitializationEntityCommandBufferSystem>();
@@ -28,20 +30,31 @@ public class AtomCloudSystem : JobComponentSystem
         {
             if (!cloud.ShouldSpawn)
                 return;
-
-                // Spawn special atoms to test features
-            // for (int i = 0; i < 2; i++)
-            // {
-            //     var instance = CommandBuffer.Instantiate(index, cloud.Atom);
-            //     var position = new float3(0f, i + 3f, 0f);
-            //     CommandBuffer.SetComponent(index, instance, new Translation { Value = position});
-            //     var velocity = new float3(1f, 0f, 0f);
-            //     CommandBuffer.SetComponent(index, instance, new Velocity { Value = velocity });
-            // }
-
-                // Spawning the main cloud (for indicies greater than 2)
-            for (int i = 0; i < cloud.Number; i++)
+            
+            if (spawnSpecial)
             {
+                // Spawn special atoms to test features
+                // for (int i = 0; i < 2; i++)
+                // {
+                    // Special 1
+                    var instance = CommandBuffer.Instantiate(index, cloud.Atom);
+                    var position = new float3(-6.2f, 0.67f, 0f);
+                    CommandBuffer.SetComponent(index, instance, new Translation { Value = position});
+                    var velocity = new float3(4f, 0f, 0f);
+                    CommandBuffer.SetComponent(index, instance, new Velocity { Value = velocity });
+                    
+                    // Special 2
+                    instance = CommandBuffer.Instantiate(index, cloud.Atom);
+                    position = new float3(-2.2f, 0f, 0f);
+                    CommandBuffer.SetComponent(index, instance, new Translation { Value = position});
+                    velocity = new float3(-4f, 0f, 0f);
+                    CommandBuffer.SetComponent(index, instance, new Velocity { Value = velocity });
+                // }
+            } else 
+            {
+                // Spawning the main cloud (for indicies greater than 2)
+                for (int i = 0; i < cloud.Number; i++)
+                {
                 var instance = CommandBuffer.Instantiate(index, cloud.Atom);
 
                     // Place the instantiated in a grid with some noise
@@ -75,8 +88,15 @@ public class AtomCloudSystem : JobComponentSystem
                     Random.NextFloat(-1f, 1f),
                     zScale*Random.NextFloat(-1f, 1f)
                 ) * cloud.SpawnVelocities + cloud.COMVelocity;
+
+                // if (x < 0)
+                // {
+                //     velocity *= 2;
+                // }
+
                 CommandBuffer.SetComponent(index, instance, new Velocity { Value = velocity });
                 
+                }
             }
 
             cloud.ShouldSpawn = false;
