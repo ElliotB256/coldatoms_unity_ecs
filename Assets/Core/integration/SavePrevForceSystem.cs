@@ -1,17 +1,16 @@
 ﻿using Integration;
-using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 
 [UpdateAfter(typeof(UpdateVelocitySystem))]
 [UpdateInGroup(typeof(FixedUpdateGroup))]
-public class SavePrevForceSystem : JobComponentSystem
+public class SavePrevForceSystem : SystemBase
 {
-    protected override JobHandle OnUpdate(JobHandle inputDependencies)
+    protected override void OnUpdate()
     {
-        return Entities.ForEach(
+        Entities.ForEach(
             (ref PrevForce prevForce, in Force force) =>
                 prevForce.Value = force.Value
-                ).Schedule(inputDependencies);
+                ).Schedule();
     }
 }

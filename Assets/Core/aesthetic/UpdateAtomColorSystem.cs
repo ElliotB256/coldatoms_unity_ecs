@@ -6,13 +6,13 @@ using Unity.Jobs;
     UpdateAfter(typeof(IncreaseCollisionTimerSystem)),
     AlwaysUpdateSystem
 ]
-public class UpdateAtomColorSystem : JobComponentSystem
+public class UpdateAtomColorSystem : SystemBase
 {
-    protected override JobHandle OnUpdate(JobHandle inputDependencies)
+    protected override void OnUpdate()
     {
-        return Entities.ForEach(
+        Entities.ForEach(
             (ref ShaderCollisionTime time, in CollisionStats stats) =>
                 time.Value = stats.TimeSinceLastCollision
-            ).Schedule(inputDependencies);
+            ).Schedule();
     }
 }

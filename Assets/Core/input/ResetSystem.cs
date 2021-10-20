@@ -4,7 +4,7 @@ using Unity.Jobs;
 using UnityEngine;
 
 [AlwaysUpdateSystem]
-public class ResetSystem : JobComponentSystem
+public class ResetSystem : SystemBase
 {
     EntityQuery AtomQuery;
     private bool _lastInputState = false;
@@ -19,15 +19,14 @@ public class ResetSystem : JobComponentSystem
         });
     }
 
-    protected override JobHandle OnUpdate(JobHandle inputDependencies)
+    protected override void OnUpdate()
     {
-        bool resetButton = Input.GetButton("Reset");
+        bool resetButton = Input.GetButtonDown("Reset");
         if (resetButton && !_lastInputState)
         {
             EntityManager.DestroyEntity(AtomQuery);
-            return Entities.ForEach((ref AtomCloud cloud) => cloud.ShouldSpawn = true).Schedule(inputDependencies);
+            Entities.ForEach((ref AtomCloud cloud) => cloud.ShouldSpawn = true).Schedule();
         }
         _lastInputState = resetButton;
-        return inputDependencies;
     }
 }

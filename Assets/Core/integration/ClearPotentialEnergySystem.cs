@@ -1,18 +1,17 @@
 ﻿using Integration;
-using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 
 [UpdateBefore(typeof(ForceCalculationSystems))]
 [UpdateInGroup(typeof(FixedUpdateGroup))]
-public class ClearPotentialEnergySystem : JobComponentSystem
+public class ClearPotentialEnergySystem : SystemBase
 {
-    protected override JobHandle OnUpdate(JobHandle inputDependencies)
+    protected override void OnUpdate()
     {
-        return Entities
+        Entities
             .ForEach(
                 (ref PotentialEnergy energy) => energy.Value = 0f
             )
-            .Schedule(inputDependencies);
+            .Schedule();
     }
 }

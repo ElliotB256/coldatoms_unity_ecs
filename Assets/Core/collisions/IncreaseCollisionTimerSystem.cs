@@ -1,19 +1,17 @@
 ﻿using Integration;
-using Unity.Burst;
-using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 
 [UpdateBefore(typeof(ForceCalculationSystems))]
 [UpdateInGroup(typeof(FixedUpdateGroup))]
-public class IncreaseCollisionTimerSystem : JobComponentSystem
+public class IncreaseCollisionTimerSystem : SystemBase
 { 
-    protected override JobHandle OnUpdate(JobHandle inputDependencies)
+    protected override void OnUpdate()
     {
         float DeltaTime = FixedUpdateGroup.FIXED_TIME_DELTA;
-        return Entities.ForEach(
+        Entities.ForEach(
             (ref CollisionStats stat) =>
                 stat.TimeSinceLastCollision = stat.TimeSinceLastCollision + DeltaTime
-            ).Schedule(inputDependencies);
+            ).Schedule();
     }
 }

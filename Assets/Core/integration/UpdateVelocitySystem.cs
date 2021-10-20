@@ -8,12 +8,12 @@ using Unity.Jobs;
 /// </summary>
 [UpdateAfter(typeof(ForceCalculationSystems))]
 [UpdateInGroup(typeof(FixedUpdateGroup))]
-public class UpdateVelocitySystem : JobComponentSystem
+public class UpdateVelocitySystem : SystemBase
 {
-    protected override JobHandle OnUpdate(JobHandle inputDependencies)
+    protected override void OnUpdate()
     {
         float DeltaTime = FixedUpdateGroup.FIXED_TIME_DELTA;
-        return Entities.ForEach(
+        Entities.ForEach(
             (
                 ref Velocity velocity,
                 in Mass mass, 
@@ -21,6 +21,6 @@ public class UpdateVelocitySystem : JobComponentSystem
                 in PrevForce oldForce
                 ) =>
                  velocity.Value = velocity.Value + 0.5f * (force.Value + oldForce.Value) * DeltaTime / mass.Value
-            ).Schedule(inputDependencies);
+            ).Schedule();
     }
 }

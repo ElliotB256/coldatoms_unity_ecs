@@ -21,6 +21,8 @@ public class MonteCarloCollisionSystem : JobComponentSystem
     /// </summary>
     public static float COLLISION_CELL_SIZE = 1f;
 
+
+
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
         int atomNumber = AtomQuery.CalculateEntityCount();
@@ -100,6 +102,8 @@ public class MonteCarloCollisionSystem : JobComponentSystem
     /// Spatial Hashmap of Atoms. Key: bin, Values: atomId
     /// </summary>
     NativeMultiHashMap<int, int> BinnedAtoms;
+
+    //IJobEntityBatchWithIndex
 
     [BurstCompile]
     struct GetAtomDataJob : IJobForEachWithEntity<Translation, CollisionRadius, Mass, Velocity>

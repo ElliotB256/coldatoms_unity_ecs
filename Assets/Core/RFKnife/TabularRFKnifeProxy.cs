@@ -1,9 +1,7 @@
 ﻿using Unity.Entities;
-using Unity.Rendering;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-[RequiresEntityConversion]
 class TabularRFKnifeProxy : MonoBehaviour, IConvertGameObjectToEntity
 {
 

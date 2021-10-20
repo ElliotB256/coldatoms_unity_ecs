@@ -34,9 +34,9 @@ namespace Calculation
                 (in RenderMesh renderMesh, in Graph graph) =>
                 {
 
-                    if (!DataPoints.Exists(graph.X) || !DataPoints.Exists(graph.Y))
+                    if (!DataPoints.HasComponent(graph.X) || !DataPoints.HasComponent(graph.Y))
                         return;
-                    if (!Ranges.Exists(graph.X) || !Ranges.Exists(graph.Y))
+                    if (!Ranges.HasComponent(graph.X) || !Ranges.HasComponent(graph.Y))
                         return;
 
                     var XData = DataPoints[graph.X];

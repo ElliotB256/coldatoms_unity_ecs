@@ -23,6 +23,11 @@ namespace Forces
     [UpdateInGroup(typeof(ForceCalculationSystems))]
     public class HarmonicTrapSystem : ExternalPotentialSystem<HarmonicTrap, Mass, HarmonicTrapCalculator>
     {
+        /// <summary>
+        /// Dummy variable used to expose this specific generic implementation to the compiler.
+        /// </summary>
+        private ApplyPotentialsJob<HarmonicTrap, Mass, HarmonicTrapCalculator> Dummy;
+
         protected override HarmonicTrapCalculator GetCalculator()
         {
             return new HarmonicTrapCalculator();

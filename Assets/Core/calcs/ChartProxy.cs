@@ -5,7 +5,6 @@ using UnityEngine;
 namespace Calculation
 {
     [DisallowMultipleComponent]
-    [RequiresEntityConversion]
     public class ChartProxy : MonoBehaviour, IConvertGameObjectToEntity
     {
         public enum eQuantity

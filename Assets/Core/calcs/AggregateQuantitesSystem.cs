@@ -26,6 +26,7 @@ namespace Calculation
     {
         protected override void OnCreate()
         {
+            Enabled = false;
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)

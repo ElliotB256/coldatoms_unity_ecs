@@ -1,5 +1,4 @@
 ﻿using Integration;
-using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -11,20 +10,28 @@ using UnityEngine;
 /// </summary>
 [UpdateInGroup(typeof(FixedUpdateGroup))]
 [UpdateBefore(typeof(ForceCalculationSystems))]
-public class RFKnifeSystem : JobComponentSystem
+public class RFKnifeSystem : SystemBase
 {
-    protected override JobHandle OnUpdate(JobHandle inputDependencies)
+    protected override void OnUpdate()
     {
         if (!GetRFKnifeSystem.KnifeExists)
-            return inputDependencies;
-        var jobHandle = new UntrapJob
-        {
-            rSq = Mathf.Pow(GetRFKnifeSystem.Radius, 2f),
-            knifePosition = GetRFKnifeSystem.Position,
-            Buffer = CommandBufferSystem.CreateCommandBuffer().ToConcurrent()
-        }.Schedule(this, inputDependencies);
-        CommandBufferSystem.AddJobHandleForProducer(jobHandle);
-        return jobHandle;
+            return;
+
+        float rSq = Mathf.Pow(GetRFKnifeSystem.Radius, 2f);
+        var knifePosition = GetRFKnifeSystem.Position;
+        var buffer = CommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
+
+        Dependency = Entities
+            .WithAll<Trapped>()
+            .ForEach(
+                (Entity e, int entityInQueryIndex, in Translation t) =>
+                {
+                    if (math.lengthsq(t.Value - knifePosition) > rSq)
+                        buffer.RemoveComponent<Trapped>(entityInQueryIndex, e);
+                }
+            ).Schedule(Dependency);
+
+        CommandBufferSystem.AddJobHandleForProducer(Dependency);
     }
 
     private RFKnifeCommandBufferSystem CommandBufferSystem;
@@ -35,21 +42,4 @@ public class RFKnifeSystem : JobComponentSystem
         CommandBufferSystem = World.GetOrCreateSystem<RFKnifeCommandBufferSystem>();
         GetRFKnifeSystem = World.GetOrCreateSystem<GetRFKnifeSystem>();
     }
-
-    [RequireComponentTag(typeof(Trapped))]
-    struct UntrapJob : IJobForEachWithEntity<Translation>
-    {
-        public float rSq;
-        public float3 knifePosition;
-        public EntityCommandBuffer.Concurrent Buffer;
-
-        public void Execute(
-            Entity e, int i,
-            [ReadOnly] ref Translation position)
-        {
-            if (math.lengthsq(position.Value - knifePosition) > rSq)
-                Buffer.RemoveComponent<Trapped>(i, e);
-        }
-    }
-
 }

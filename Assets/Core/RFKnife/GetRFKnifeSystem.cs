@@ -6,7 +6,7 @@ using Unity.Transforms;
 /// Locates rf knife and exports values for other systems to use.
 /// </summary>
 [UpdateBefore(typeof(RFKnifeSystem))]
-public class GetRFKnifeSystem : ComponentSystem
+public class GetRFKnifeSystem : SystemBase
 {
     public float Radius;
     public float3 Position;
@@ -16,7 +16,7 @@ public class GetRFKnifeSystem : ComponentSystem
     {
         KnifeExists = false;
         Entities
-            .With(RFKnives)
+            .WithAll<RFKnife>()
             .ForEach(
                 (Entity e, ref Radius r, ref Translation t) =>
                 {
@@ -24,19 +24,6 @@ public class GetRFKnifeSystem : ComponentSystem
                     Position = t.Value;
                     KnifeExists = true;
                 }
-        );
-    }
-
-    private EntityQuery RFKnives;
-
-    protected override void OnCreate()
-    {
-        RFKnives = GetEntityQuery(new EntityQueryDesc
-        {
-            All = new[] {
-                    ComponentType.ReadOnly<RFKnife>()
-                }
-        }
-        );
+        ).WithoutBurst().Run();
     }
 }

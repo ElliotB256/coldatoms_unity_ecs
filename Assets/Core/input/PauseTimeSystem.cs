@@ -2,7 +2,7 @@
 using Unity.Entities;
 using UnityEngine;
 
-public class PauseTimeSystem : ComponentSystem
+public class PauseTimeSystem : SystemBase
 {
     private bool _isPaused = false;
     private bool _lastInputState = false;

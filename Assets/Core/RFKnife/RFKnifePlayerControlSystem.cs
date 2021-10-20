@@ -9,23 +9,18 @@ using UnityEngine;
 /// Updates the size of the RF knife entity so that the visual representation matches the knife radius.
 /// </summary>
 [UpdateBefore(typeof(ForceCalculationSystems))]
-public class RFKnifePlayerControlSystem : JobComponentSystem
+public class RFKnifePlayerControlSystem : SystemBase
 {
-    [RequireComponentTag(typeof(RFKnife))]
-    struct PlayerControlRFKnifeJob : IJobForEach<PlayerInputs,Radius>
+    protected override void OnUpdate()
     {
-        public float dT;
-
-        public void Execute(
-            [ReadOnly] ref PlayerInputs controls,
-            ref Radius radius)
-        {
-            radius.Value *= (1 + controls.VerticalAxis * dT / 2);
-        }
-    }
-
-    protected override JobHandle OnUpdate(JobHandle inputDependencies)
-    {
-        return new PlayerControlRFKnifeJob { dT = Time.DeltaTime }.Schedule(this, inputDependencies);
+        float dT = Time.DeltaTime;
+        Entities
+            .WithAll<RFKnife>()
+            .ForEach(
+                (ref Radius radius, in PlayerInputs controls) =>
+                {
+                    radius.Value *= (1 + controls.VerticalAxis * dT / 2);
+                }
+            ).Schedule();
     }
 }

@@ -1,18 +1,17 @@
 ﻿using Integration;
-using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 
 [UpdateInGroup(typeof(FixedUpdateGroup))]
 [UpdateBefore(typeof(ForceCalculationSystems))]
-public class ClearForceSystem : JobComponentSystem
+public class ClearForceSystem : SystemBase
 {
-    protected override JobHandle OnUpdate(JobHandle inputDependencies)
+    protected override void OnUpdate()
     {
-        return Entities
+        Entities
             .ForEach(
                 (ref Force force) => force.Value = new Unity.Mathematics.float3(0f, 0f, 0f)
             )
-            .Schedule(inputDependencies);
+            .Schedule();
     }
 }

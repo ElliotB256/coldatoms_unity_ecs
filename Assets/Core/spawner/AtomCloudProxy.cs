@@ -2,7 +2,6 @@
 using Unity.Entities;
 using UnityEngine;
 
-[RequiresEntityConversion]
 public class AtomCloudProxy : MonoBehaviour, IConvertGameObjectToEntity, IDeclareReferencedPrefabs
 {
     [Tooltip("Entity type spawned by the cloud.")]

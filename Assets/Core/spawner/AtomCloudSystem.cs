@@ -23,7 +23,7 @@ public class AtomCloudSystem : JobComponentSystem
     struct SpawnJob : IJobForEachWithEntity<AtomCloud, LocalToWorld>
     {
         [ReadOnly] public Random Random;
-        public EntityCommandBuffer.Concurrent CommandBuffer;
+        public EntityCommandBuffer.ParallelWriter CommandBuffer;
 
         public void Execute(Entity entity, int index, [ReadOnly] ref AtomCloud cloud,
             [ReadOnly] ref LocalToWorld location)
@@ -107,7 +107,7 @@ public class AtomCloudSystem : JobComponentSystem
     {
         var job = new SpawnJob
         {
-            CommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
+            CommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().AsParallelWriter(),
                 // Does the 10000 limit the number of unique positions/velocities?
                     // I thought the second argument was the upper limit 
             Random = new Random((uint)UnityEngine.Random.Range(1, 10000))

@@ -9,17 +9,12 @@ using Unity.Transforms;
 /// </summary>
 [UpdateBefore(typeof(ForceCalculationSystems))]
 [UpdateInGroup(typeof(FixedUpdateGroup))]
-public class UpdatePositionSystem : JobComponentSystem
+public class UpdatePositionSystem : SystemBase
 {
-    protected override void OnCreate()
-    {
-        Enabled = false;
-    }
-
-    protected override JobHandle OnUpdate(JobHandle inputDependencies)
+    protected override void OnUpdate()
     {
         float DeltaTime = FixedUpdateGroup.FIXED_TIME_DELTA;
-        return Entities.ForEach(
+        Entities.ForEach(
             (
                 ref Translation translation,
                 in Mass mass,
@@ -27,6 +22,6 @@ public class UpdatePositionSystem : JobComponentSystem
                 in Velocity velocity
                 ) =>
                 translation.Value = translation.Value + velocity.Value * DeltaTime + 0.5f * (force.Value / mass.Value) * DeltaTime * DeltaTime
-            ).Schedule(inputDependencies);
+            ).Schedule();
     }
 }

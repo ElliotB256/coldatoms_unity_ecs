@@ -3,7 +3,6 @@ using Unity.Transforms;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-[RequiresEntityConversion]
 public class RFKnifeProxy : MonoBehaviour, IConvertGameObjectToEntity
 {
     [Tooltip("Radius of the RF knife.")]
