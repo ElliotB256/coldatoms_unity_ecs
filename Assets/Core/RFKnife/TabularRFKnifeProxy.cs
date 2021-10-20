@@ -12,6 +12,9 @@ class TabularRFKnifeProxy : MonoBehaviour, IConvertGameObjectToEntity
         
         var buffer = dstManager.GetBuffer<TabularRFKnifeElement>(entity);
         buffer.Add(new TabularRFKnifeElement { Duration = 0.0f, Radius = 10f });
-        buffer.Add(new TabularRFKnifeElement { Duration = 10.0f, Radius = 0f });
+        buffer.Add(new TabularRFKnifeElement { Duration = 10.0f, Radius = 9f });
+        buffer.Add(new TabularRFKnifeElement { Duration = 5.0f, Radius = 7.5f });
+        buffer.Add(new TabularRFKnifeElement { Duration = 5.0f, Radius = 5f });
+        buffer.Add(new TabularRFKnifeElement { Duration = 5.0f, Radius = 4f });
     }
 }

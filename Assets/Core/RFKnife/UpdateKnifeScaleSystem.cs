@@ -4,7 +4,6 @@ using Unity.Transforms;
 /// <summary>
 /// Updates the size of the RF knife entity so that the visual representation matches the knife radius.
 /// </summary>
-[UpdateBefore(typeof(ForceCalculationSystems))]
 public class UpdateKnifeScaleSystem : SystemBase
 {
     protected override void OnUpdate()

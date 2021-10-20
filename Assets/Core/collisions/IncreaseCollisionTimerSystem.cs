@@ -12,6 +12,6 @@ public class IncreaseCollisionTimerSystem : SystemBase
         Entities.ForEach(
             (ref CollisionStats stat) =>
                 stat.TimeSinceLastCollision = stat.TimeSinceLastCollision + DeltaTime
-            ).Schedule();
+            ).ScheduleParallel();
     }
 }

@@ -18,7 +18,7 @@ public class AtomCloudProxy : MonoBehaviour, IConvertGameObjectToEntity, IDeclar
 
     public Vector3 CentreOfMassVelocity;
 
-    public bool UseThreeDimensions = true;
+    public bool UseThreeDimensions = true; 
 
     public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {

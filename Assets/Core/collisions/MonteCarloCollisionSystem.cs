@@ -14,56 +14,73 @@ using UnityEngine;
 /// Note currently implemented - disabled by default.
 /// </summary>
 [UpdateBefore(typeof(ForceCalculationSystems))]
-public class MonteCarloCollisionSystem : JobComponentSystem
+public class MonteCarloCollisionSystem : SystemBase
 {
     /// <summary>
     /// Size of a collision cell, in Unity units.
     /// </summary>
     public static float COLLISION_CELL_SIZE = 1f;
 
-
-
-    protected override JobHandle OnUpdate(JobHandle inputDeps)
+    protected override void OnUpdate()
     {
         int atomNumber = AtomQuery.CalculateEntityCount();
-        InitialiseMemory(atomNumber);
+        var atoms = new NativeArray<Atom>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        var binnedAtoms = new NativeMultiHashMap<int, int>(atomNumber, Allocator.TempJob);
+        var uniqueBinIds = new NativeList<int>(atomNumber, Allocator.TempJob);
+        var collided = new NativeArray<bool>(atomNumber, Allocator.TempJob, NativeArrayOptions.ClearMemory);
 
-        var clearCollideJH = new ClearCollideJob { Collided = Collided }.Schedule(inputDeps);
-        var getAtomDataJH = new GetAtomDataJob { Atoms = Atoms, AtomVelocities = AtomVelocities }.Schedule(AtomQuery, clearCollideJH);
-        var sortAtomsJH = new SortAtomsJob { BinnedAtoms = BinnedAtoms.AsParallelWriter(), CellSize = COLLISION_CELL_SIZE }.Schedule(AtomQuery, getAtomDataJH);
-        var getUniqueKeysJH = new GetUniqueKeysJob { BinnedAtoms = BinnedAtoms, UniqueKeys = UniqueBinIds }.Schedule(sortAtomsJH);
-        var doCollisionsJH = new DoCollisionsJob { dT = FixedUpdateGroup.FIXED_TIME_DELTA, Atoms = Atoms, AtomVelocities = AtomVelocities, BinIDs = UniqueBinIds, BinnedAtoms = BinnedAtoms, Collided = Collided }.Schedule(atomNumber, 1, getUniqueKeysJH);
-        var updateAtomVelocitiesJH = new UpdateAtomVelocitiesJob { AtomVelocities = AtomVelocities }.Schedule(AtomQuery, doCollisionsJH);
-        var updateCollisionStatsJH = new UpdateCollisionStatsJob { Collided = Collided }.Schedule(AtomQuery, doCollisionsJH);
-
-        _hasRun = true;
-        return JobHandle.CombineDependencies(updateAtomVelocitiesJH, updateCollisionStatsJH);
-    }
-
-    public void InitialiseMemory(int atomNumber)
-    {
-        Cleanup();
-        Atoms = new NativeArray<Atom>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        AtomVelocities = new NativeArray<Velocity>(atomNumber, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        BinnedAtoms = new NativeMultiHashMap<int, int>(atomNumber, Allocator.TempJob);
-        UniqueBinIds = new NativeList<int>(atomNumber, Allocator.TempJob);
-        Collided = new NativeArray<bool>(atomNumber, Allocator.TempJob, NativeArrayOptions.ClearMemory);
-    }
-
-    protected override void OnCreate()
-    {
-        Enabled = false;
-        AtomQuery = GetEntityQuery(new EntityQueryDesc
-        {
-            All = new[] {
-                    ComponentType.ReadOnly<Translation>(),
-                    ComponentType.ReadOnly<CollisionRadius>(),
-                    ComponentType.ReadOnly<Mass>(),
-                    ComponentType.ReadWrite<Velocity>(),
-                    ComponentType.ReadWrite<Trapped>(),
-                    ComponentType.ReadWrite<CollisionStats>()
+        // Fill atom arrays.
+        Dependency = Entities
+            .WithAll<CollisionStats>()
+            .WithStoreEntityQueryInField(ref AtomQuery)
+            .ForEach(
+                (
+                    Entity e, int entityInQueryIndex,
+                    ref Translation translation,
+                    ref CollisionRadius radius,
+                    ref Mass mass,
+                    ref Velocity velocity
+                    ) =>
+                {
+                    atoms[entityInQueryIndex] = new Atom { translation = translation, radius = radius, mass = mass, velocity = velocity };
                 }
-        });
+            )
+            .Schedule(Dependency);
+
+        // Spatially sort atoms to produce hashmap.
+        Dependency = new SortAtomsJob {
+            Atoms = atoms,
+            BinnedAtoms = binnedAtoms.AsParallelWriter(),
+            CellSize = COLLISION_CELL_SIZE
+        }.Schedule(atomNumber, Dependency);
+
+        Dependency = new GetUniqueKeysJob { BinnedAtoms = binnedAtoms, UniqueKeys = uniqueBinIds }.Schedule(Dependency);
+        Dependency = new DoCollisionsJob { 
+            dT = FixedUpdateGroup.FIXED_TIME_DELTA,
+            Atoms = atoms,
+            BinIDs = uniqueBinIds,
+            BinnedAtoms = binnedAtoms,
+            Collided = collided,
+            Random = new Unity.Mathematics.Random((uint)UnityEngine.Random.Range(1, 10000))
+    }.Schedule(atomNumber, 1, Dependency);
+        
+        // Update atom velocities with collided values.
+        var updateAtomVelocitiesJH = new UpdateAtomVelocitiesJob {
+            Atoms = atoms,
+            velocityTypeHandle = GetComponentTypeHandle<Velocity>(false)
+        }.Schedule(AtomQuery, Dependency);
+
+        var updateCollisionStatsJH = new UpdateCollisionStatsJob {
+            Collided = collided,
+            statsTypeHandle = GetComponentTypeHandle<CollisionStats>(false)
+        }.Schedule(AtomQuery, Dependency);
+
+        Dependency = JobHandle.CombineDependencies(updateAtomVelocitiesJH, updateCollisionStatsJH);
+
+        atoms.Dispose(Dependency);
+        uniqueBinIds.Dispose(Dependency);
+        binnedAtoms.Dispose(Dependency);
+        collided.Dispose(Dependency);
     }
 
     EntityQuery AtomQuery;
@@ -73,73 +90,28 @@ public class MonteCarloCollisionSystem : JobComponentSystem
         public Translation translation;
         public CollisionRadius radius;
         public Mass mass;
-    }
-
-    NativeArray<Atom> Atoms;
-    NativeArray<Velocity> AtomVelocities;
-    NativeList<int> UniqueBinIds;
-    NativeArray<bool> Collided;
-
-    bool _hasRun = false;
-    public void Cleanup()
-    {
-        if (_hasRun)
-        {
-            Atoms.Dispose();
-            AtomVelocities.Dispose();
-            UniqueBinIds.Dispose();
-            BinnedAtoms.Dispose();
-            Collided.Dispose();
-        }
-    }
-
-    protected override void OnDestroy()
-    {
-        Cleanup();
-    }
-
-    /// <summary>
-    /// Spatial Hashmap of Atoms. Key: bin, Values: atomId
-    /// </summary>
-    NativeMultiHashMap<int, int> BinnedAtoms;
-
-    //IJobEntityBatchWithIndex
-
-    [BurstCompile]
-    struct GetAtomDataJob : IJobForEachWithEntity<Translation, CollisionRadius, Mass, Velocity>
-    {
-        public NativeArray<Atom> Atoms;
-        public NativeArray<Velocity> AtomVelocities;
-
-        public void Execute(Entity entity, int index,
-            [ReadOnly] ref Translation translation,
-            [ReadOnly] ref CollisionRadius radius,
-            [ReadOnly] ref Mass mass,
-            [ReadOnly] ref Velocity velocity)
-        {
-            Atoms[index] = new Atom { translation = translation, radius = radius, mass = mass };
-            AtomVelocities[index] = velocity;
-        }
+        public Velocity velocity;
     }
 
     /// <summary>
     /// Sorts atoms into spatial hashmap
     /// </summary>
     [BurstCompile]
-    struct SortAtomsJob : IJobForEachWithEntity<Translation>
+    struct SortAtomsJob : IJobFor
     {
         [ReadOnly] public float CellSize;
+        public NativeArray<Atom> Atoms;
         public NativeMultiHashMap<int, int>.ParallelWriter BinnedAtoms;
 
-        public void Execute(Entity entity, int index, [ReadOnly] ref Translation position)
+        public void Execute(int index)
         {
-            int hash = (int)math.hash(new int3(math.floor(position.Value / CellSize)));
+            int hash = (int)math.hash(new int3(math.floor(Atoms[index].translation.Value / CellSize)));
             BinnedAtoms.Add(hash, index);
         }
     }
 
     struct GetUniqueKeysJob : IJob
-    {
+    { 
         [ReadOnly] public NativeMultiHashMap<int, int> BinnedAtoms;
         public NativeList<int> UniqueKeys;
 
@@ -158,14 +130,14 @@ public class MonteCarloCollisionSystem : JobComponentSystem
         /// Time delta used for update
         /// </summary>
         public float dT;
-        [NativeDisableParallelForRestriction] [ReadOnly] public NativeArray<Atom> Atoms;
-        [NativeDisableParallelForRestriction] public NativeArray<Velocity> AtomVelocities;
+        [NativeDisableParallelForRestriction] public NativeArray<Atom> Atoms;
         [NativeDisableParallelForRestriction] [ReadOnly] public NativeList<int> BinIDs;
         [NativeDisableParallelForRestriction] [ReadOnly] public NativeMultiHashMap<int, int> BinnedAtoms;
         /// <summary>
         /// Set to true for atoms that have collided
         /// </summary>
         [NativeDisableParallelForRestriction] public NativeArray<bool> Collided;
+        public Unity.Mathematics.Random Random;
 
         public void Execute2(int index)
         {
@@ -219,6 +191,7 @@ public class MonteCarloCollisionSystem : JobComponentSystem
         public void DoMonteCarloCollisions(int bin)
         {
             int i = 0;
+            var occupancy = BinnedAtoms.CountValuesForKey(bin);
             foreach (var atom1 in BinnedAtoms.GetValuesForKey(bin))
             {
                 int j = 0;
@@ -232,12 +205,12 @@ public class MonteCarloCollisionSystem : JobComponentSystem
                     float crossSection = math.PI * collisionRadius * collisionRadius;
 
                     // Determine the relative velocity between the two particles.
-                    float3 relativeVelocity = AtomVelocities[atom1].Value - AtomVelocities[atom2].Value;
+                    float3 relativeVelocity = Atoms[atom1].velocity.Value - Atoms[atom2].velocity.Value;
+                    var n = 1 / math.pow(COLLISION_CELL_SIZE, 3f);
+                    float collisionChance = dT * math.length(relativeVelocity) * crossSection * n;
 
-                    float collisionChance = dT * math.length(relativeVelocity) * crossSection / math.pow(COLLISION_CELL_SIZE, 3f);
-
-                    // if (collisionChance > some random)
-                    Collide(atom1, atom2);
+                    if (collisionChance > Random.NextFloat())
+                        Collide(atom1, atom2);
 
                     j++;
                 }
@@ -252,19 +225,24 @@ public class MonteCarloCollisionSystem : JobComponentSystem
         /// <param name="b">index of second atom</param>
         public void Collide(int a, int b)
         {
+            var atomA = Atoms[a];
+            var atomB = Atoms[b];
             // Velocity in center of mass frame
-            float3 comv = (AtomVelocities[a].Value + AtomVelocities[b].Value) / 2f;
+            float3 comv = (atomA.velocity.Value + atomB.velocity.Value) / 2f;
 
             //transform velocities to CoM frame
-            float3 vel1 = AtomVelocities[a].Value - comv;
-            float3 vel2 = AtomVelocities[b].Value - comv;
+            float3 vel1 = atomA.velocity.Value - comv;
+            float3 vel2 = atomB.velocity.Value - comv;
 
             //Only swap if velocities are facing each other in com frame
             if (math.dot(vel1, vel2) < 0f)
             {
                 // swap velocities in CoM frame
-                AtomVelocities[a] = new Velocity { Value = comv + vel2 };
-                AtomVelocities[b] = new Velocity { Value = comv + vel1 };
+                atomA.velocity = new Velocity { Value = comv + vel2 };
+                atomB.velocity = new Velocity { Value = comv + vel1 };
+
+                Atoms[a] = atomA;
+                Atoms[b] = atomB;
 
                 Collided[a] = true;
                 Collided[b] = true;
@@ -273,36 +251,37 @@ public class MonteCarloCollisionSystem : JobComponentSystem
     }
 
     [BurstCompile]
-    struct UpdateAtomVelocitiesJob : IJobForEachWithEntity<Velocity>
+    struct UpdateAtomVelocitiesJob : IJobEntityBatchWithIndex
     {
-        public NativeArray<Velocity> AtomVelocities;
+        public NativeArray<Atom> Atoms;
+        public ComponentTypeHandle<Velocity> velocityTypeHandle;
 
-        public void Execute(Entity entity, int index, ref Velocity velocity)
+        public void Execute(ArchetypeChunk batchInChunk, int batchIndex, int indexOfFirstEntityInQuery)
         {
-            velocity = AtomVelocities[index];
+            NativeArray<Velocity> velocities = batchInChunk.GetNativeArray(velocityTypeHandle);
+
+            for (int i = 0; i < batchInChunk.Count; i++)
+                velocities[i] = Atoms[i+indexOfFirstEntityInQuery].velocity;
         }
     }
 
     [BurstCompile]
-    struct UpdateCollisionStatsJob : IJobForEachWithEntity<CollisionStats>
+    struct UpdateCollisionStatsJob : IJobEntityBatchWithIndex
     {
         public NativeArray<bool> Collided;
+        public ComponentTypeHandle<CollisionStats> statsTypeHandle;
 
-        public void Execute(Entity entity, int index, ref CollisionStats stats)
+        public void Execute(ArchetypeChunk batchInChunk, int batchIndex, int indexOfFirstEntityInQuery)
         {
-            if (Collided[index])
-                stats.TimeSinceLastCollision = 0f;
-        }
-    }
-
-    struct ClearCollideJob : IJob
-    {
-        public NativeArray<bool> Collided;
-
-        public void Execute()
-        {
-            for (int i = 0; i < Collided.Length; i++)
-                Collided[i] = false;
+            NativeArray<CollisionStats> stats = batchInChunk.GetNativeArray(statsTypeHandle);
+            
+            for (int i=0; i<batchInChunk.Count; i++)
+                if (Collided[i+indexOfFirstEntityInQuery])
+                {
+                    var stat = stats[i];
+                    stat.TimeSinceLastCollision = 0f;
+                    stats[i] = stat;
+                }
         }
     }
 }
