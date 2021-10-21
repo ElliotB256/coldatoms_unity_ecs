@@ -21,16 +21,15 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: RFKnife
-  m_Shader: {fileID: -6465566751694194690, guid: a4ef701eed8bf314f822b6de55182e55,
+  m_Shader: {fileID: -6465566751694194690, guid: 792ce97e69a723d4aad8ae52ba691909,
     type: 3}
   m_ShaderKeywords: _DISABLE_SSR_TRANSPARENT _ENABLE_FOG_ON_TRANSPARENT _SURFACE_TYPE_TRANSPARENT
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 3400
+  m_CustomRenderQueue: -1
   stringTagMap:
     MotionVector: User
-    RenderType: Transparent
   disabledShaderPasses:
   - RayTracingPrepass
   - MOTIONVECTORS

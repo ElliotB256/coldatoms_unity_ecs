@@ -8,13 +8,13 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: AtomMaterial
-  m_Shader: {fileID: -6465566751694194690, guid: a67f25d7e2faf604ba4d903e8a24c6ec,
+  m_Shader: {fileID: -6465566751694194690, guid: 58a8d0c81dea70147a347454ee64aee5,
     type: 3}
   m_ShaderKeywords: _DISABLE_SSR_TRANSPARENT
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 2225
+  m_CustomRenderQueue: -1
   stringTagMap:
     MotionVector: User
   disabledShaderPasses:
@@ -177,7 +177,7 @@ Material:
     - _BlendMode: 0
     - _BumpScale: 1
     - _CoatMask: 0
-    - _CollTime: 0
+    - _CollTime: 1
     - _CullMode: 2
     - _CullModeForward: 2
     - _Cutoff: 0.5
@@ -304,7 +304,13 @@ Material:
     - Color_71df983f4f324f6d87d599dc45378394: {r: 0.762638, g: 0.76365364, b: 0.7735849,
         a: 0}
     - Color_a74ce363fe494340a1bfc7aaa7535944: {r: 0, g: 0.3019608, b: 1, a: 0}
+    - Color_b021af40bb8c47deb8b46b34f6c729f7: {r: 0.3464311, g: 0.36762893, b: 0.4245283,
+        a: 0}
+    - Color_b9fa9569f70047188fb7203bc681f4c2: {r: 0.7264151, g: 0.7264151, b: 0.7264151,
+        a: 0}
     - Color_dd80b1f31afa4260a237abd946b9041c: {r: 0, g: 0.30359125, b: 1, a: 0}
+    - Color_ee1d86fb29b24952ab4a869eee67512c: {r: 0.245105, g: 0.27862188, b: 0.33962262,
+        a: 0}
     - Vector4_B3B81F98: {r: 1, g: 1, b: 1, a: 0}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _BaseColorMap_MipInfo: {r: 0, g: 0, b: 0, a: 0}

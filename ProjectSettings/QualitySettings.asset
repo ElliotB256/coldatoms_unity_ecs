@@ -20,11 +20,11 @@ QualitySettings:
     shadowmaskMode: 1
     skinWeights: 4
     textureQuality: 0
-    anisotropicTextures: 2
-    antiAliasing: 2
+    anisotropicTextures: 0
+    antiAliasing: 0
     softParticles: 1
     softVegetation: 1
-    realtimeReflectionProbes: 1
+    realtimeReflectionProbes: 0
     billboardsFaceCameraPosition: 1
     vSyncCount: 0
     lodBias: 1
@@ -40,7 +40,7 @@ QualitySettings:
     asyncUploadBufferSize: 16
     asyncUploadPersistentBuffer: 1
     resolutionScalingFixedDPIFactor: 1
-    customRenderPipeline: {fileID: 11400000, guid: c4a32557512565a44addb50be4d6c693,
+    customRenderPipeline: {fileID: 11400000, guid: 87afc516df8942c4e8abad060a1c0bba,
       type: 2}
     excludedTargetPlatforms: []
   m_PerPlatformDefaultQuality:
