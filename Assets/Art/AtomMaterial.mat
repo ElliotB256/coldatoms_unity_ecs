@@ -178,6 +178,7 @@ Material:
     - _BumpScale: 1
     - _CoatMask: 0
     - _CollTime: 1
+    - _CollisionTime: 0
     - _CullMode: 2
     - _CullModeForward: 2
     - _Cutoff: 0.5
@@ -304,7 +305,7 @@ Material:
     - Color_71df983f4f324f6d87d599dc45378394: {r: 0.762638, g: 0.76365364, b: 0.7735849,
         a: 0}
     - Color_a74ce363fe494340a1bfc7aaa7535944: {r: 0, g: 0.3019608, b: 1, a: 0}
-    - Color_b021af40bb8c47deb8b46b34f6c729f7: {r: 0.3464311, g: 0.36762893, b: 0.4245283,
+    - Color_b021af40bb8c47deb8b46b34f6c729f7: {r: 0.990566, g: 0.032707386, b: 0.06838401,
         a: 0}
     - Color_b9fa9569f70047188fb7203bc681f4c2: {r: 0.7264151, g: 0.7264151, b: 0.7264151,
         a: 0}
@@ -312,8 +313,10 @@ Material:
     - Color_ee1d86fb29b24952ab4a869eee67512c: {r: 0.245105, g: 0.27862188, b: 0.33962262,
         a: 0}
     - Vector4_B3B81F98: {r: 1, g: 1, b: 1, a: 0}
+    - Vector4_e790eb741934445ba5c48e37f5fe6ad0: {r: 0, g: 0, b: 0, a: 0}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _BaseColorMap_MipInfo: {r: 0, g: 0, b: 0, a: 0}
+    - _CollTime: {r: 0, g: 0, b: 0, a: 0}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _DiffusionProfileAsset: {r: 0, g: 0, b: 0, a: 0}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}

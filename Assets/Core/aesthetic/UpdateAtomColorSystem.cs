@@ -1,5 +1,7 @@
 ﻿using Unity.Entities;
 using Unity.Jobs;
+using Unity.Mathematics;
+using Unity.Rendering;
 
 [
     UpdateAfter(typeof(IncreaseCollisionTimerSystem)),
