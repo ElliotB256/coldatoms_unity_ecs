@@ -178,7 +178,7 @@ Material:
     - _BumpScale: 1
     - _CoatMask: 0
     - _CollTime: 1
-    - _CollisionTime: 0
+    - _CollisionTime: 1
     - _CullMode: 2
     - _CullModeForward: 2
     - _Cutoff: 0.5
@@ -277,6 +277,7 @@ Material:
     - _StencilWriteMaskGBuffer: 14
     - _StencilWriteMaskMV: 40
     - _SubsurfaceMask: 1
+    - _Superposition: 0
     - _SupportDecals: 1
     - _SurfaceType: 0
     - _TexWorldScale: 1
@@ -304,8 +305,10 @@ Material:
     m_Colors:
     - Color_71df983f4f324f6d87d599dc45378394: {r: 0.762638, g: 0.76365364, b: 0.7735849,
         a: 0}
+    - Color_7658ccf8cf2e4a26b5398c530ad6930a: {r: 0.62264144, g: 0.114542566, b: 0.114542566,
+        a: 0}
     - Color_a74ce363fe494340a1bfc7aaa7535944: {r: 0, g: 0.3019608, b: 1, a: 0}
-    - Color_b021af40bb8c47deb8b46b34f6c729f7: {r: 0.990566, g: 0.032707386, b: 0.06838401,
+    - Color_b021af40bb8c47deb8b46b34f6c729f7: {r: 0.03137256, g: 0.09966256, b: 0.99215686,
         a: 0}
     - Color_b9fa9569f70047188fb7203bc681f4c2: {r: 0.7264151, g: 0.7264151, b: 0.7264151,
         a: 0}

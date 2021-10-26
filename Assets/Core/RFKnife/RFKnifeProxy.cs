@@ -13,6 +13,7 @@ public class RFKnifeProxy : MonoBehaviour, IConvertGameObjectToEntity
         dstManager.AddComponentData(entity, new RFKnife());
         dstManager.AddComponentData(entity, new Radius { Value = Radius });
         dstManager.AddComponentData(entity, new Scale());
+        dstManager.AddComponentData(entity, new KnifeVisibility { Value = 1f });
         dstManager.AddComponentData(entity, new PlayerInputs());
     }
 }

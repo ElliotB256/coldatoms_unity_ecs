@@ -19,7 +19,7 @@ public class MonteCarloCollisionSystem : SystemBase
     /// <summary>
     /// Size of a collision cell, in Unity units.
     /// </summary>
-    public static float COLLISION_CELL_SIZE = 1f;
+    public static float COLLISION_CELL_SIZE = 2f;
 
     protected override void OnUpdate()
     {
@@ -31,7 +31,7 @@ public class MonteCarloCollisionSystem : SystemBase
 
         // Fill atom arrays.
         Dependency = Entities
-            .WithAll<CollisionStats>()
+            .WithAll<CollisionStats, Trapped>()
             .WithStoreEntityQueryInField(ref AtomQuery)
             .ForEach(
                 (
@@ -56,7 +56,7 @@ public class MonteCarloCollisionSystem : SystemBase
 
         Dependency = new GetUniqueKeysJob { BinnedAtoms = binnedAtoms, UniqueKeys = uniqueBinIds }.Schedule(Dependency);
         Dependency = new DoCollisionsJob { 
-            dT = FixedUpdateGroup.FIXED_TIME_DELTA,
+            dT = FixedUpdateGroup.FixedTimeDelta,
             Atoms = atoms,
             BinIDs = uniqueBinIds,
             BinnedAtoms = binnedAtoms,

@@ -28,7 +28,7 @@ public class TabularRFKnifeSystem : JobComponentSystem
 {
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        float dt = FixedUpdateGroup.FIXED_TIME_DELTA;
+        float dt = FixedUpdateGroup.FixedTimeDelta;
         return Entities.ForEach(
             (DynamicBuffer<TabularRFKnifeElement> elements, ref TabularRFKnife knife, ref Radius radius)
                 =>

@@ -18,7 +18,9 @@ public class AtomCloudProxy : MonoBehaviour, IConvertGameObjectToEntity, IDeclar
 
     public Vector3 CentreOfMassVelocity;
 
-    public bool UseThreeDimensions = true; 
+    public bool UseThreeDimensions = true;
+
+    public bool ShouldSpawn = true;
 
     public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
@@ -31,7 +33,7 @@ public class AtomCloudProxy : MonoBehaviour, IConvertGameObjectToEntity, IDeclar
             SpawnVelocities = SpawnVelocities,
             COMVelocity = CentreOfMassVelocity,
             ThreeDimensions = UseThreeDimensions,
-            ShouldSpawn = true
+            ShouldSpawn = ShouldSpawn
         };
         dstManager.AddComponentData(entity, atomCloud);
     }

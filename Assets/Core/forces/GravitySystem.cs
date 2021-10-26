@@ -1,6 +1,4 @@
-﻿using Unity.Burst;
-using Unity.Collections;
-using Unity.Entities;
+﻿using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 
@@ -10,7 +8,7 @@ using Unity.Mathematics;
 [UpdateInGroup(typeof(ForceCalculationSystems))]
 public class GravitySystem : SystemBase
 {
-    public const float GRAVITATIONAL_CONSTANT = 20.0f;
+    public const float GRAVITATIONAL_CONSTANT = 200.0f;
 
     protected override void OnUpdate()
     {

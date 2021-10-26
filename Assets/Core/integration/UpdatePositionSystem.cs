@@ -13,7 +13,7 @@ public class UpdatePositionSystem : SystemBase
 {
     protected override void OnUpdate()
     {
-        float DeltaTime = FixedUpdateGroup.FIXED_TIME_DELTA;
+        float DeltaTime = FixedUpdateGroup.FixedTimeDelta;
         Entities.ForEach(
             (
                 ref Translation translation,

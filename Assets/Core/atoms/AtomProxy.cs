@@ -20,6 +20,7 @@ public class AtomProxy : MonoBehaviour, IConvertGameObjectToEntity
         dstManager.AddComponentData(entity, new Trapped());
         dstManager.AddComponentData(entity, new CollisionStats { TimeSinceLastCollision = 0f , CollidedThisFrame = false});
         dstManager.AddComponentData(entity, new ShaderCollisionTime { Value = 100f });
+        dstManager.AddComponentData(entity, new Superposition { Value = 0f });
         dstManager.AddComponentData(entity, new Atom());        
     }
 }

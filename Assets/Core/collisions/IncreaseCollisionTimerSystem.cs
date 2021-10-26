@@ -8,7 +8,7 @@ public class IncreaseCollisionTimerSystem : SystemBase
 { 
     protected override void OnUpdate()
     {
-        float DeltaTime = FixedUpdateGroup.FIXED_TIME_DELTA;
+        float DeltaTime = FixedUpdateGroup.FixedTimeDelta;
         Entities.ForEach(
             (ref CollisionStats stat) =>
                 stat.TimeSinceLastCollision = stat.TimeSinceLastCollision + DeltaTime
