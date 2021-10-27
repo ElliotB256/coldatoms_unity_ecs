@@ -26,9 +26,11 @@ public class MakeMeasurementSystem : SystemBase
         var lower = (float)lowerQ.CalculateEntityCount();
 
         var reading = (upper - lower) / (upper + lower) * 2f * 10f;
+        float error = 60f / math.pow(((float)upper + (float)lower), 0.5f);
 
         var newPoint = EntityManager.Instantiate(sequence.GraphPointTemplate);
         EntityManager.SetComponentData(newPoint, new Translation { Value = new float3 { x = 20f + sequence.StartingTime / 6f * 6f, y = 15f + reading, z = 0f } });
+        EntityManager.AddComponentData(newPoint, new NonUniformScale { Value = new float3 { x = 1f, y = error, z = 1f } });
 
         sequence.Stage++;
         SetSingleton(sequence);

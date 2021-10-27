@@ -8,7 +8,8 @@ public class SequenceControlSystem : SystemBase
     {
         var sequence = GetSingleton<Sequence>();
 
-        if (Input.GetKeyDown(KeyCode.KeypadEnter) && sequence.Stage == SequenceStage.Evaporation)
+        //if (sequence.Stage == SequenceStage.Evaporation)
+        if ((Input.GetKeyDown(KeyCode.KeypadEnter) || Input.GetKeyDown(KeyCode.Return)) && sequence.Stage == SequenceStage.Evaporation)
         {
             sequence.Stage++;
         }
@@ -19,6 +20,14 @@ public class SequenceControlSystem : SystemBase
             sequence.SignalCurrent = sequence.SignalCurrent + 1 % sequence.SignalPeriod;
         }
 
+#if UNITY_EDITOR
+
+#else
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Application.Quit();
+        }
+#endif
         SetSingleton(sequence);
     }
 }

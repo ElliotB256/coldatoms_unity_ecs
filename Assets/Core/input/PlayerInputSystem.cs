@@ -15,7 +15,6 @@ public class PlayerInputSystem : SystemBase
     {
         PlayerInputs actualinput = new PlayerInputs();
         actualinput.VerticalAxis = Input.GetAxis("Vertical");
-
         Entities.ForEach((ref PlayerInputs input) => input = actualinput).Schedule();
     }
 }

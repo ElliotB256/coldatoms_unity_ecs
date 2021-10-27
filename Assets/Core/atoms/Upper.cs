@@ -11,4 +11,7 @@ public struct Upper : IComponentData
     /// The entity taking the lower path.
     /// </summary>
     public Entity Lower;
+
+    public float Theta1;
+    public float Theta2;
 }

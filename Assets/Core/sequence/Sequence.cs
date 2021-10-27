@@ -15,6 +15,8 @@ public struct Sequence : IComponentData
     public int SignalCurrent;
     public float StartingTime;
     public Entity GraphPointTemplate;
+    public float BeamRadius;
+    public float VelocitySelectionWidth;
 
     public float GetStartingPhase() => math.PI * 2.0f * SignalCurrent / SignalPeriod;
 }

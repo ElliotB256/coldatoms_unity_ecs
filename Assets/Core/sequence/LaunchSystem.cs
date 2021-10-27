@@ -22,6 +22,8 @@ public class LaunchSystem : SystemBase
 
         var buffer = BufferSystem.CreateCommandBuffer();
 
+        float vWidth = sequence.VelocitySelectionWidth;
+
         //Prevent atoms from colliding, launch them.
         Dependency = Entities
             .WithAll<Trapped>()
@@ -30,7 +32,11 @@ public class LaunchSystem : SystemBase
                 { 
                     radius.Value = 0f;
                     //reduce velocity to allow us to actually see separation
-                    vel.Value = vel.Value / 3f + new float3(0f, sequence.LaunchSpeed, 0f);
+                    vel.Value = vel.Value / 3f;
+                    
+                    if (math.abs(vel.Value.y) < vWidth)
+                    vel.Value = vel.Value + new float3(0f, sequence.LaunchSpeed, 0f);
+
                     buffer.RemoveComponent<Trapped>(e);
                 }
         )

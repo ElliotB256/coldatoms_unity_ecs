@@ -14,6 +14,7 @@ public class MirrorSystem : SystemBase
 
         Entities.WithAll<Atom, Upper>().ForEach((ref Velocity vel) => vel.Value -= flipVelocity).Schedule();
         Entities.WithNone<Upper>().WithAll<Atom>().ForEach((ref Velocity vel) => vel.Value += flipVelocity).Schedule();
+        Entities.ForEach((ref BeamPower power) => power.Value = 0.2f).Schedule();
 
         sequence.Stage++;
         SetSingleton(sequence);
