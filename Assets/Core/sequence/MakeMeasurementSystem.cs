@@ -60,7 +60,7 @@ public class MakeMeasurementSystem : SystemBase
         error = math.clamp(error, 0f, 55f);
 
         //add a random noise to the reading. (uniform, but w/e)
-        reading = reading + UnityEngine.Random.Range(-error, error) / 2f;
+        reading = reading + UnityEngine.Random.Range(-error, error) / 3f;
 
         var x = 20f + sequence.StartingTime / 6f * 6f;
         var y = 40f + reading;
