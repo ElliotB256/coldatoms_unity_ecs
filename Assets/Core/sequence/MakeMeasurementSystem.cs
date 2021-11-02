@@ -62,9 +62,16 @@ public class MakeMeasurementSystem : SystemBase
         //add a random noise to the reading. (uniform, but w/e)
         reading = reading + UnityEngine.Random.Range(-error, error) / 2f;
 
-        var newPoint = EntityManager.Instantiate(sequence.GraphPointTemplate);
-        EntityManager.SetComponentData(newPoint, new Translation { Value = new float3 { x = 20f + sequence.StartingTime / 6f * 6f, y = 40f + reading, z = 0f } });
-        EntityManager.AddComponentData(newPoint, new NonUniformScale { Value = new float3 { x = 1f, y = error, z = 1f } });
+        // Error bar
+        var bar = EntityManager.Instantiate(sequence.GraphPointTemplate);
+        EntityManager.SetComponentData(bar, new Translation { Value = new float3 { x = 20f + sequence.StartingTime / 6f * 6f, y = 40f + reading, z = 0f } });
+        EntityManager.AddComponentData(bar, new NonUniformScale { Value = new float3 { x = 1f, y = error, z = 1f } });
+
+        // Point
+        var point = EntityManager.Instantiate(sequence.GraphPointTemplate);
+        EntityManager.SetComponentData(point, new Translation { Value = new float3 { x = 20f + sequence.StartingTime / 6f * 6f, y = 40f + reading, z = 0f } });
+        EntityManager.AddComponentData(point, new NonUniformScale { Value = new float3 { x = 1.5f, y = 1.5f, z = 1f } });
+        EntityManager.AddComponentData(point, new Rotation { Value = quaternion.RotateZ(math.PI * 45f / 180f) });
 
         sequence.Stage++;
         SetSingleton(sequence);
