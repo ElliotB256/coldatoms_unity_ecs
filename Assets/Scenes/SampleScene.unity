@@ -1565,6 +1565,8 @@ MonoBehaviour:
   StartingTime: 0
   GraphPointTemplate: {fileID: 5982750063762990873, guid: 2d544985a9e0f1946ae683ef0ab4ce4f,
     type: 3}
+  GraphCentrePointTemplate: {fileID: 5982750063762990873, guid: ed90e754f361b024a913c28f5ac19658,
+    type: 3}
   BeamRadius: 5
   VelocitySelectionWidth: 10
   MeasurementRegionWidth: 0.5

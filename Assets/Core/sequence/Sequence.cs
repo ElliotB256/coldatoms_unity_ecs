@@ -15,6 +15,7 @@ public struct Sequence : IComponentData
     public int SignalCurrent;
     public float StartingTime;
     public Entity GraphPointTemplate;
+    public Entity GraphCentrePointTemplate;
     public float BeamRadius;
     public float VelocitySelectionWidth;
     public float MeasurementRegionWidth;

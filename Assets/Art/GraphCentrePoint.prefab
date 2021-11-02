@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 8316570893597768662}
   - component: {fileID: -1600769820957562605}
   m_Layer: 0
-  m_Name: GraphPoint
+  m_Name: GraphCentrePoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -41,7 +41,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5982750063762990873}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+  m_Mesh: {fileID: -2432090755550338912, guid: 71f66b21b96cd3d428576c356b3e51fc, type: 3}
 --- !u!23 &6385897902315390026
 MeshRenderer:
   m_ObjectHideFlags: 0

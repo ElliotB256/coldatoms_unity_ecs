@@ -62,15 +62,29 @@ public class MakeMeasurementSystem : SystemBase
         //add a random noise to the reading. (uniform, but w/e)
         reading = reading + UnityEngine.Random.Range(-error, error) / 2f;
 
+        var x = 20f + sequence.StartingTime / 6f * 6f;
+        var y = 40f + reading;
+        var width = 0.25f;
+
         // Error bar
         var bar = EntityManager.Instantiate(sequence.GraphPointTemplate);
-        EntityManager.SetComponentData(bar, new Translation { Value = new float3 { x = 20f + sequence.StartingTime / 6f * 6f, y = 40f + reading, z = 0f } });
-        EntityManager.AddComponentData(bar, new NonUniformScale { Value = new float3 { x = 1f, y = error, z = 1f } });
+        EntityManager.SetComponentData(bar, new Translation { Value = new float3 { x = x, y = y, z = 0f } });
+        EntityManager.AddComponentData(bar, new NonUniformScale { Value = new float3 { x = width, y = error, z = 0.5f } });
+
+        // Upper cap
+        var upCap = EntityManager.Instantiate(sequence.GraphPointTemplate);
+        EntityManager.SetComponentData(upCap, new Translation { Value = new float3 { x = x, y = y + error / 2f, z = 0f } });
+        EntityManager.AddComponentData(upCap, new NonUniformScale { Value = new float3 { x = 1.3f, y = width, z = 0.5f } });
+
+        // Lower cap
+        var lowCap = EntityManager.Instantiate(sequence.GraphPointTemplate);
+        EntityManager.SetComponentData(lowCap, new Translation { Value = new float3 { x = x, y = y - error / 2f, z = 0f } });
+        EntityManager.AddComponentData(lowCap, new NonUniformScale { Value = new float3 { x = 1.3f, y = width, z = 0.5f } });
 
         // Point
-        var point = EntityManager.Instantiate(sequence.GraphPointTemplate);
-        EntityManager.SetComponentData(point, new Translation { Value = new float3 { x = 20f + sequence.StartingTime / 6f * 6f, y = 40f + reading, z = 0f } });
-        EntityManager.AddComponentData(point, new NonUniformScale { Value = new float3 { x = 1.5f, y = 1.5f, z = 1f } });
+        var point = EntityManager.Instantiate(sequence.GraphCentrePointTemplate);
+        EntityManager.SetComponentData(point, new Translation { Value = new float3 { x = x, y = y, z = 0f } });
+        EntityManager.AddComponentData(point, new NonUniformScale { Value = new float3 { x = 0.6f, y = 0.6f, z = 1f } });
         EntityManager.AddComponentData(point, new Rotation { Value = quaternion.RotateZ(math.PI * 45f / 180f) });
 
         sequence.Stage++;
