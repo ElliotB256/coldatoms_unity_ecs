@@ -7,9 +7,9 @@ public class SequenceControlSystem : SystemBase
     protected override void OnUpdate()
     {
         var sequence = GetSingleton<Sequence>();
+        var controls = GetSingleton<PlayerInputs>();
 
-        //if (sequence.Stage == SequenceStage.Evaporation)
-        if ((Input.GetKeyDown(KeyCode.KeypadEnter) || Input.GetKeyDown(KeyCode.Return)) && sequence.Stage == SequenceStage.Evaporation)
+        if (controls.doubleClicked && sequence.Stage == SequenceStage.Evaporation)
         {
             sequence.Stage++;
         }

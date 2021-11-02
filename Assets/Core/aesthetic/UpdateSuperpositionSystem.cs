@@ -9,8 +9,8 @@ public class UpdateSuperpositionSystem : SystemBase
     protected override void OnUpdate()
     {
         var sequence = GetSingleton<Sequence>();
-        bool passed = sequence.Stage < SequenceStage.Mirror;
-        passed = false;
+        bool passed = sequence.Stage > SequenceStage.Mirror;
+        //passed = false;
 
         Entities.WithNone<Upper>().ForEach(
             (ref Superposition superpos) =>

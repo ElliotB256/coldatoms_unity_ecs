@@ -11,7 +11,7 @@ public class RFKnifeProxy : MonoBehaviour, IConvertGameObjectToEntity
     public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
         dstManager.AddComponentData(entity, new RFKnife());
-        dstManager.AddComponentData(entity, new Radius { Value = Radius });
+        dstManager.AddComponentData(entity, new Radius { Value = Radius, R0 = Radius });
         dstManager.AddComponentData(entity, new Scale());
         dstManager.AddComponentData(entity, new KnifeVisibility { Value = 1f });
         dstManager.AddComponentData(entity, new PlayerInputs());
